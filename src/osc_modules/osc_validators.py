@@ -1,10 +1,12 @@
+import traceback
+
 def osc_requires(osc_module):
 	def decorator(method):
-		def wrapped(self, *args, **path_args):
+		def wrapped(self, *args, **kwargs):
 			if self.server.get_module(osc_module) is None:
 				self._error('required osc_module not found in server:', osc_module)
 			else:
-				return method(self, *args, **path_args)
+				return method(self, *args, **kwargs)
 		return wrapped
 	return decorator
 
@@ -31,12 +33,23 @@ def lps_node_exists(method):
 	def wrapped(self, *args, **path_args):
 		node_id = int(path_args['node_id'])
 		if not _lps_node_exists(self, node_id):
-			self._error('Bad node_id ('+str(node_id)+'>='+self.server.lps_node_number+')')
+			self._error('Bad node_id ('+str(node_id)+'>='+str(self.server.lps_node_number)+')')
+		else:
+			return method(self, *args, **path_args)
+	return wrapped
+
+def lps_node_has_position(method):
+	@lps_node_exists
+	def wrapped(self, *args, **path_args):
+		node_id = int(path_args['node_id'])
+		if self.server.lps_positions[node_id] is None:
+			self._error('lps node', node_id, 'position not set')
 		else:
 			return method(self, *args, **path_args)
 	return wrapped
 
 
+#TODO : Check TOC
 def _log_exists(self, drone_id, log_name):
 	return ('logs' in self.server.drones[drone_id] and
 			log_name in self.server.drones[drone_id]['logs'])
@@ -76,8 +89,8 @@ def drone_connected(method):
 
 
 def _param_exists(self, drone_id, param_group, param_name):
-	return (param_group in self.drones[drone_id]['cf'].log.toc.toc and
-			param_name in self.drones[drone_id]['cf'].log.toc.toc[param_group])
+	return (param_group in self.server.drones[drone_id]['cf'].param.toc.toc and
+			param_name in self.server.drones[drone_id]['cf'].param.toc.toc[param_group])
 
 def param_exists(method):
 	@osc_requires('PARAM')
@@ -99,53 +112,40 @@ def param_exists(method):
 def multi_drones(method):
 	@osc_requires('CRAZYFLIE')
 	def wrapped(self, *args, **path_args):
-		drones = path_args['drones']
+		drones = str(path_args['drones'])
 		if drones is '*':
-			drones_ids = self.server.get_module('CRAZYFLIE').get_connected_drones()
-		elif ';' not in drones:
-			drones_ids = [drones]
-		else:
+			drones_ids = self.server.drones.keys()
+		elif ';' in drones:
 			drones_ids = drones.split(';')
+		else:
+			drones_ids = [drones]
 
 		for drone_id in drones_ids:
 			path_args['drone_id'] = int(drone_id)
 			try:
 				method(self, *args, **path_args)
 			except Exception as e:
-				self._error(e)
+				self._error('Exception catched :', traceback.format_exc())
 	return wrapped
 
 
-# def multi_drones_connected(method):
-# 	def wrapped(self, *args, **path_args):
-# 		drones_ids = path_args['drones_ids']
+## MULTI LPS NODE OSC VALIDATORS
 
-# 		filtered_drones_ids = [d for d in drones_ids if d in
-# 			self.server.get_module('CRAZYFLIE').get_connected_drones()]
+def multi_nodes(method):
+	@osc_requires('LPS')
+	def wrapped(self, *args, **path_args):
+		nodes = str(path_args['nodes'])
+		if nodes is '*':
+			nodes_ids = range(0, self.server.lps_node_number)
+		elif ';' in nodes:
+			nodes_ids = nodes.split(';')
+		else:
+			nodes_ids = [nodes]
 
-# 		for d in list(set(drones_ids) - set(filtered_drones_ids)):
-# 			self._error('drone not found', d)
-
-# 		path_args['drones_ids'] = filtered_drones_ids
-
-# 		return method(self, *args, **path_args)
-# 	return wrapped
-
-# def multi_drones_param_exists(method):
-# 	@multi_drones_connected
-# 	def wrapped(self, *args, **path_args):
-# 		drones_ids = path_args['drones_ids']
-# 		param_group = str(path_args['param_group'])
-# 		param_name = str(path_args['param_name'])
-
-# 		filtered_drones_ids = [d for d in drones_ids if 
-# 			_param_exists(self, d, param_group, param_name)]
-
-# 		for d in list(set(drones_ids) - set(filtered_drones_ids)):
-# 			self._error('param not found in drone', d,':',
-# 				param_group+'.'+param_name)
-
-# 		path_args['drones_ids'] = filtered_drones_ids
-
-# 		return method(self, *args, **path_args)
-# 	return wrapped
+		for node_id in nodes_ids:
+			path_args['node_id'] = int(node_id)
+			try:
+				method(self, *args, **path_args)
+			except Exception as e:
+				self._error('Exception catched :', traceback.format_exc())
+	return wrapped

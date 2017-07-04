@@ -1,7 +1,7 @@
 from .OscModule import OscModule
 from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie import Crazyflie
-from .osc_validators import drone_connected, drone_exists
+from .osc_validators import *
 import cflib
 
 class CrazyflieModule(OscModule):
@@ -20,8 +20,9 @@ class CrazyflieModule(OscModule):
 
 	def routes(self):
 		self.add_route('/{drone_id}/add', self.osc_add_drone)
-		self.add_route('/{drone_id}/remode', self.osc_remove_drone)
+		self.add_route('/{drone_id}/remove', self.osc_remove_drone)
 		self.add_route('/{drone_id}/goal', self.osc_goal)
+		self.add_route('/{drones}/lps/{nodes}/update_pos', self.osc_update_lps_pos)
 
 	def osc_add_drone(self, address, radio_url, **path_args):
 		"""
@@ -99,3 +100,37 @@ class CrazyflieModule(OscModule):
 
 	def get_connected_drones(self):
 		return [drone for drone in self.server.drones.values() if drone['connected']]
+
+
+	@osc_requires('LPS')
+	@osc_requires('PARAM')
+	@multi_drones
+	@multi_nodes
+	@drone_connected
+	@lps_node_has_position
+	def osc_update_lps_pos(self, address, *args,
+		**path_args):
+		"""
+		OSC listen: /{drones}/lps/{nodes}/update_pos
+		
+		:param str {drones}: drones ids separated by a ';'. * for all
+		:param str {nodes}: nodes ids separated by a ';'. * for all
+
+		Sends new lps nodes {nodes} positions to drones {drones} params
+		"""
+
+		drone_id = path_args['drone_id']
+		node_id = path_args['node_id']
+
+		self._debug('Updating lps node', node_id, 'position in drone', drone_id)
+
+		param_module = self.server.get_module('PARAM')
+		param_module.osc_set_param(None,
+			param_group='anchorpos', param_name='anchor'+str(node_id)+'x',
+			value=self.server.lps_positions[node_id][0], **path_args)
+		param_module.osc_set_param(None,
+			param_group='anchorpos', param_name='anchor'+str(node_id)+'y',
+			value=self.server.lps_positions[node_id][1], **path_args)
+		param_module.osc_set_param(None,
+			param_group='anchorpos', param_name='anchor'+str(node_id)+'z',
+			value=self.server.lps_positions[node_id][2], **path_args)
