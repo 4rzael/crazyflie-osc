@@ -28,6 +28,7 @@ class Server(object):
 		self.osc_clients = {}
 		# LpsModule
 		self.lps_node_number = 8
+		self.lps_positions = [None] * self.lps_node_number
 
 
 	def get_module(self, name):

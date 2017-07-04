@@ -42,8 +42,11 @@ class ParamModule(OscModule):
 		param_group = str(path_args['param_group'])
 		param_name = str(path_args['param_name'])
 
+		self._debug('setting param', param_group+'.'+param_name,
+			'in drone', drone_id, 'to value', str(value))
+
 		self.server.drones[drone_id]['cf'].\
-		param.set_value(param_group+'.'+param_name, value)
+		param.set_value(param_group+'.'+param_name, str(value))
 
 	@multi_drones
 	@drone_connected
