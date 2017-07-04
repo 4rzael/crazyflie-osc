@@ -1,0 +1,3 @@
+#IMPORT connect_drone_3.script; drone 3 as 0
+
+/log/0/send_toc

@@ -1,0 +1,16 @@
+#IMPORT connect_drone_3.script; drone 3 as 0
+
+/log/0/add blob tdoa 1000
+#WAIT 100
+/log/0/tdoa/add_variable blob tdoa.d0 float
+#WAIT 100
+/log/0/tdoa/add_variable blob tdoa.d1 float
+#WAIT 100
+/log/0/tdoa/add_variable blob tdoa.d2 float
+#WAIT 100
+/log/0/tdoa/add_variable blob tdoa.d3 float
+#WAIT 100
+/log/0/tdoa/add_variable blob tdoa.d4 float
+#WAIT 100
+/log/0/tdoa/start
+#WAIT 100

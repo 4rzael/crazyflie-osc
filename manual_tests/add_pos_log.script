@@ -1,0 +1,12 @@
+#IMPORT connect_drone_3.script; drone 3 as 0
+
+/log/0/add blob position 100
+#WAIT 100
+/log/0/position/add_variable blob kalman.stateX float
+#WAIT 100
+/log/0/position/add_variable blob kalman.stateY float
+#WAIT 100
+/log/0/position/add_variable blob kalman.stateZ float
+#WAIT 100
+/log/0/position/start
+#WAIT 100

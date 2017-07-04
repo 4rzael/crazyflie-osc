@@ -20,6 +20,12 @@ def regex_to_topic(regex):
 
 
 class OscModule(object):
+
+	@staticmethod
+	def get_name():
+		raise NotImplementedError
+
+
 	"""docstring for OscModule"""
 	def _topic_reg(self, topic):
 		if topic[0] is not '/':
@@ -28,12 +34,16 @@ class OscModule(object):
 
 
 	def __init__(self, base_topic, debug=False):
+		"""
+		OscModule constructor
+		:param str base_topic: the topic of this module. Every routes in it will be relative to this one
+		:param bool debug: configure either the module should print debug messages
+		"""
 		self.base_topic = str(base_topic)
 		# remove potential trailing / and add a potential / at the beginning
 		if self.base_topic[-1] is '/':
 			self.base_topic = self.base_topic[:-1]
 		self.debug = debug
-		self.name = None
 		self.dispatcher = None
 
 		self._routes = []
@@ -42,6 +52,8 @@ class OscModule(object):
 	def add_route(self, sub_topic, callback):
 		"""
 		Add a new route to the server (relative to the module base_topic)
+		:param str sub_topic: the topic (relative to base_topic) of this route
+		:param function callback: the route handler
 		"""
 		full_topic_regex = self._topic_reg(sub_topic)
 		full_topic = regex_to_topic(full_topic_regex)
@@ -55,7 +67,7 @@ class OscModule(object):
 		"""
 		if self.debug:
 			args = args + (Style.RESET_ALL,)
-			print(Fore.YELLOW + '['+self.name+' DEBUG]', *args)
+			print(Fore.YELLOW + '['+self.get_name()+' DEBUG]', *args)
 
 
 	def _error(self, *args):
@@ -63,12 +75,13 @@ class OscModule(object):
 		Print an error message on stderr (todo: also send to an OSC topic)
 		"""
 		args = args + (Style.RESET_ALL,)
-		print(Fore.RED + '['+self.name+' ERROR]', *args, file=sys.stderr)
+		print(Fore.RED + '['+self.get_name()+' ERROR]', *args, file=sys.stderr)
 
 
 	def __call__(self, dispatcher):
 		"""
-		Builds the routes
+		Builds the routes of this module
+		:param Dispatcher dispatcher: the python-osc dispatcher
 		"""
 		self.dispatcher = dispatcher
 		self.routes()
@@ -87,4 +100,7 @@ class OscModule(object):
 
 
 	def routes(self):
+		"""
+		Add your routes here with self.add_route() calls
+		"""
 		raise NotImplementedError
