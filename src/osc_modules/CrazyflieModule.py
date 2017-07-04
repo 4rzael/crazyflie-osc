@@ -1,6 +1,7 @@
 from .OscModule import OscModule
 from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie import Crazyflie
+from .osc_validators import drone_connected, drone_exists
 import cflib
 
 class CrazyflieModule(OscModule):
@@ -15,7 +16,6 @@ class CrazyflieModule(OscModule):
 
 	def __init__(self, base_topic, server, debug=False):
 		super(CrazyflieModule, self).__init__(base_topic=base_topic, debug=debug)
-		self.name = self.get_name()
 		self.server = server
 
 	def routes(self):
@@ -25,12 +25,12 @@ class CrazyflieModule(OscModule):
 
 	def osc_add_drone(self, address, radio_url, **path_args):
 		"""
-		OSC listen:
-			/{drone_id}/add String->RADIO_URL
+		OSC listen: /{drone_id}/add
+		:param str radio_url: the radio url of the drone
 
-		Adds a new drone with the ID {drone_id} and tries to connect on the URL RADIO_URL
+		Adds a new drone with the ID {drone_id} and tries to connect on the URL radio_url
 		"""
-		drone_id = path_args['drone_id']
+		drone_id = int(path_args['drone_id'])
 		self._debug('adding drone', drone_id, 'at url', radio_url)
 		if drone_id not in self.server.drones:
 			cf = Crazyflie()
@@ -60,23 +60,31 @@ class CrazyflieModule(OscModule):
 			cf.connection_failed.add_callback(on_connection_failed)
 			cf.disconnected.add_callback(on_disconnection)
 
+			# PARAM MODULE
+			if self.server.get_module('PARAM'):
+				self.server.get_module('PARAM').add_param_cb(drone_id)
+
 		if not self.server.drones[drone_id]['connected']:
 			self.server.drones[drone_id]['cf'].open_link(radio_url)
 		else:
 			self._error('drone', drone_id, 'already added and connected')
 
+	@drone_connected
 	def osc_goal(self, address, x, y, z, yaw, **path_args):
 		"""
-		OSC listen:
-			/{drone_id}/goal Float->x Float->y Float->z Float->yaw
+		OSC listen: /{drone_id}/goal
+		:param float x: the X position
+		:param float y: the Y position
+		:param float z: the Z position
+		:param float yaw: the yaw position
 
-			Sends a 3D setpoint to the drone with ID {drone_id}
+		Sends a 3D setpoint to the drone with ID {drone_id}
 		"""
-		drone_id = path_args['drone_id']
-		if drone_id in self.server.drones:
-			(self.server.drones[drone_id]['cf']
-			.commander.send_setpoint(y, x, yaw, int(z*1000)))
+		drone_id = int(path_args['drone_id'])
+		(self.server.drones[drone_id]['cf']
+		.commander.send_setpoint(y, x, yaw, int(z*1000)))
 
+	@drone_exists
 	def osc_remove_drone(self, address, **path_args):
 		"""
 		OSC listen:
@@ -84,13 +92,10 @@ class CrazyflieModule(OscModule):
 
 			Disconnects and remove the drone with the given ID
 		"""
-		drone_id = path_args['drone_id']	
-		if drone_id in self.server.drones:
-			if self.server.drones[drone_id]['connected']:
-				self.server.drones[drone_id]['cf'].close_link()
-			del self.server.drones[drone_id]
-		else:
-			self._error('cannot delete drone', drone_id, ': it does not exist')
+		drone_id = int(path_args['drone_id'])
+		if self.server.drones[drone_id]['connected']:
+			self.server.drones[drone_id]['cf'].close_link()
+		del self.server.drones[drone_id]
 
 	def get_connected_drones(self):
 		return [drone for drone in self.server.drones.values() if drone['connected']]

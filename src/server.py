@@ -6,7 +6,7 @@ dispatches requests to correct modules
 """
 import argparse
 
-from osc_modules import TestModule, LpsModule, CrazyflieModule, ClientModule
+from osc_modules import *
 
 from pythonosc import dispatcher
 from pythonosc import osc_server
@@ -29,8 +29,10 @@ class Server(object):
 		# LpsModule
 		self.lps_node_number = 8
 
+
 	def get_module(self, name):
 		return self.modules[name] if name in self.modules else None
+
 
 	def build_routes(self):
 		"""
@@ -47,10 +49,15 @@ class Server(object):
 				CrazyflieModule(base_topic='/crazyflie', server=self, debug=True),
 			LpsModule.get_name():
 				LpsModule(base_topic='/lps', server=self, debug=True),
+			LogModule.get_name():
+				LogModule(base_topic='/log', server=self, debug=True),
+			ParamModule.get_name():
+				ParamModule(base_topic='/param', server=self, debug=True),
 		}
 
 		for module in self.modules:
 			self.modules[module](self.dispatcher)
+
 
 	def run(self, args):
 		self.ip = args.ip
