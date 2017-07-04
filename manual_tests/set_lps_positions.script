@@ -1,7 +1,6 @@
-#IMPORT connect_drone_3.script; drone 3 as 0
 #DEFINE W #WAIT 100; Every #W is interpreted as #WAIT 100
 
-/lps/set_node_number int 8
+/lps/set_node_number int 7
 #W
 /lps/0/set_position float[]    0    0    0
 #W
@@ -16,9 +15,8 @@
 /lps/5/set_position float[]    0 4.10    5
 #W
 /lps/6/set_position float[]    0    0    5
-#W
-/lps/7/set_position float[]    0    0    0
 #WAIT 1000
+
 /lps/0/reboot bool 0
 #W
 /lps/1/reboot bool 0
@@ -32,7 +30,8 @@
 /lps/5/reboot bool 0
 #W
 /lps/6/reboot bool 0
-#W
-/lps/7/reboot bool 0
-#W
+#WAIT 1000
+
+/crazyflie/*/lps/*/update_pos
+
 #UNDEFINE W

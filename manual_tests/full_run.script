@@ -1,0 +1,9 @@
+#IMPORT connect_drone_3.script
+
+#IMPORT set_lps_positions.script
+
+/param/*/kalman/resetEstimation/set int 1
+#WAIT 100
+/param/*/kalman/resetEstimation/set int 0
+
+
