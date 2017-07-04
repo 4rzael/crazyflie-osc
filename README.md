@@ -7,15 +7,15 @@ An OSC server to control crazyflies
 
 * Sending 3D setpoints
 
-* LPS configuration (untested)
+* LPS configuration
 
 * Adding OSC listeners for events
+
+* Drone param system (write only)
 
 ## TODO :
 
 * Drone logging system
-
-* Drone param system
 
 * OSC debugging system
 

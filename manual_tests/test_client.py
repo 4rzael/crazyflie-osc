@@ -30,6 +30,7 @@ def clever(lws):
 
 type_to_func = {
 	'str': lambda lws: ' '.join(lws),
+	'str[]': lambda lws: lws,
 	'int': lambda lws: int(lws[0]),
 	'int[]': lambda lws: [int(lw) for lw in lws],
 	'float': lambda lws: float(lws[0]),

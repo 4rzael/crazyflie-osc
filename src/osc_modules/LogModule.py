@@ -14,9 +14,8 @@ class LogModule(OscModule):
 		return 'LOG'
 
 
-	def __init__(self, base_topic, server, debug=False):
-		super(LogModule, self).__init__(base_topic=base_topic, debug=debug)
-		self.server = server
+	def __init__(self, server, base_topic, debug=False):
+		super(LogModule, self).__init__(server=server, base_topic=base_topic, debug=debug)
 
 
 	def routes(self):

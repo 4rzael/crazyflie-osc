@@ -12,9 +12,8 @@ class LpsModule(OscModule):
 		return 'LPS'
 
 
-	def __init__(self, base_topic, server, debug=False):
-		super(LpsModule, self).__init__(base_topic=base_topic, debug=debug)
-		self.server = server
+	def __init__(self, server, base_topic, debug=False):
+		super(LpsModule, self).__init__(server=server, base_topic=base_topic, debug=debug)
 
 
 	def routes(self):

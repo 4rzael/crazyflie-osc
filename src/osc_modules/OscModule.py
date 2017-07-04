@@ -2,6 +2,7 @@ import re
 import sys
 
 from colorama import Fore, Style
+from .osc_validators import osc_requires
 
 def regexed(regex):
 	def decorator(method):
@@ -33,7 +34,7 @@ class OscModule(object):
 		return self.base_topic + str(topic)
 
 
-	def __init__(self, base_topic, debug=False):
+	def __init__(self, server, base_topic, debug=False):
 		"""
 		OscModule constructor
 		:param str base_topic: the topic of this module. Every routes in it will be relative to this one
@@ -43,6 +44,7 @@ class OscModule(object):
 		# remove potential trailing / and add a potential / at the beginning
 		if self.base_topic[-1] is '/':
 			self.base_topic = self.base_topic[:-1]
+		self.server = server
 		self.debug = debug
 		self.dispatcher = None
 
@@ -76,6 +78,11 @@ class OscModule(object):
 		"""
 		args = args + (Style.RESET_ALL,)
 		print(Fore.RED + '['+self.get_name()+' ERROR]', *args, file=sys.stderr)
+
+
+	@osc_requires('CLIENT')
+	def _send(self, topic, data):
+		self.server.get_module('CLIENT').broadcast(self._topic_reg(topic), data)
 
 
 	def __call__(self, dispatcher):
