@@ -1,4 +1,5 @@
 from .OscModule import OscModule
+from pythonosc import udp_client
 
 class ClientModule(OscModule):
 
@@ -11,15 +12,14 @@ class ClientModule(OscModule):
 	def get_name():
 		return 'CLIENT'
 
-	def __init__(self, base_topic, server, debug=False):
-		super(ClientModule, self).__init__(base_topic=base_topic, debug=debug)
-		self.server = server
+	def __init__(self, server, base_topic, debug=False):
+		super(ClientModule, self).__init__(server=server, base_topic=base_topic, debug=debug)
 
 	def routes(self):
-		self.add_route('/add', self.add_client)
-		self.add_route('/remove', self.remove_client)
+		self.add_route('/add', self.osc_add_client)
+		self.add_route('/remove', self.osc_remove_client)
 
-	def add_client(self, address, ip, port):
+	def osc_add_client(self, address, ip, port):
 		"""
 		OSC listen: /add
 		:param str ip: the client ip to connect to 
@@ -27,14 +27,18 @@ class ClientModule(OscModule):
 
 		Adds a new client which will receive OSC messages from crazyflie-osc
 		"""
-		self._debug('adding client', ip+':'+port)
+
+		ip = str(ip)
+		port = int(port)
+
+		self._debug('adding client', ip+':'+str(port))
 		if (ip, port) not in self.server.osc_clients:
 			self.server.osc_clients[(ip, port)] = udp_client.SimpleUDPClient(ip, port)
 			self._debug('success')
 		else:
 			self._debug('failure')
 
-	def remove_client(self, address, ip, port):
+	def osc_remove_client(self, address, ip, port):
 		"""
 		OSC listen: /remove
 		:param str ip: the client ip to connect to 
@@ -42,9 +46,20 @@ class ClientModule(OscModule):
 
 		Removes an OSC client
 		"""
-		self._debug('removing client', ip+':'+port)
+
+		ip = str(ip)
+		port = int(port)
+
+		self._debug('removing client', ip+':'+str(port))
 		if (ip, port) in self.server.osc_clients:
 			del self.server.osc_clients[(ip, port)]
 			self._debug('success')
 		else:
 			self._debug('failure')
+
+
+	def broadcast(self, address, data):
+		self._debug('broadcasting to', address)
+
+		for key, value in self.server.osc_clients.items():
+			value.send_message(address, data)

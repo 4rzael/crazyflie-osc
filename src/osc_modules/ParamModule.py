@@ -12,9 +12,8 @@ class ParamModule(OscModule):
 	def get_name():
 		return 'PARAM'
 
-	def __init__(self, base_topic, server, debug=False):
-		super(ParamModule, self).__init__(base_topic=base_topic, debug=debug)
-		self.server = server
+	def __init__(self, server, base_topic, debug=False):
+		super(ParamModule, self).__init__(server=server, base_topic=base_topic, debug=debug)
 
 	def routes(self):
 		self.add_route('/{drones}/{param_group}/{param_name}/set', self.osc_set_param)

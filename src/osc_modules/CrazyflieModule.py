@@ -14,15 +14,16 @@ class CrazyflieModule(OscModule):
 	def get_name():
 		return 'CRAZYFLIE'
 
-	def __init__(self, base_topic, server, debug=False):
-		super(CrazyflieModule, self).__init__(base_topic=base_topic, debug=debug)
-		self.server = server
+	def __init__(self, server, base_topic, debug=False):
+		super(CrazyflieModule, self).__init__(server=server, base_topic=base_topic, debug=debug)
+
 
 	def routes(self):
 		self.add_route('/{drone_id}/add', self.osc_add_drone)
 		self.add_route('/{drone_id}/remove', self.osc_remove_drone)
 		self.add_route('/{drone_id}/goal', self.osc_goal)
 		self.add_route('/{drones}/lps/{nodes}/update_pos', self.osc_update_lps_pos)
+
 
 	def osc_add_drone(self, address, radio_url, **path_args):
 		"""
@@ -49,6 +50,12 @@ class CrazyflieModule(OscModule):
 				(self.server.drones[drone_id]['cf']
 				.param.set_value('flightmode.posSet', '1'))
 
+				# Send LPS nodes positions to the drone
+				if self.server.get_module('LPS'):
+					self.osc_update_lps_pos('',
+						drones=drone_id,
+						nodes='*')
+
 			def on_connection_failed(uri, message):
 				self._error('connection to drone', drone_id, 'failed:', message)
 
@@ -70,6 +77,7 @@ class CrazyflieModule(OscModule):
 		else:
 			self._error('drone', drone_id, 'already added and connected')
 
+
 	@drone_connected
 	def osc_goal(self, address, x, y, z, yaw, **path_args):
 		"""
@@ -85,6 +93,7 @@ class CrazyflieModule(OscModule):
 		(self.server.drones[drone_id]['cf']
 		.commander.send_setpoint(y, x, yaw, int(z*1000)))
 
+
 	@drone_exists
 	def osc_remove_drone(self, address, **path_args):
 		"""
@@ -97,6 +106,7 @@ class CrazyflieModule(OscModule):
 		if self.server.drones[drone_id]['connected']:
 			self.server.drones[drone_id]['cf'].close_link()
 		del self.server.drones[drone_id]
+
 
 	def get_connected_drones(self):
 		return [drone for drone in self.server.drones.values() if drone['connected']]
