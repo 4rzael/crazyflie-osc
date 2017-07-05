@@ -8,16 +8,20 @@ def regexed(regex):
 	def decorator(method):
 		def wrapper(address, *args):
 			# switch every {name} to "(P<name>.*)" in order to make a real regex
-			pattern = re.sub('\{(.*?)\}', '(?P<\\1>.*)', regex)
+			pattern = re.sub('\{(.+?)\}', '(?P<\\1>.+)', regex)
+			pattern = '^' + pattern + '$'
 			# then match the path to the regex
-			regex_args = re.match(pattern, address).groupdict()
-			return method(address, *args, **regex_args)
+			m = re.match(pattern, address)
+			# The python-osc matcher is not perfect so we make it more restrictive here
+			if m is not None:
+				regex_args = m.groupdict()
+				return method(address, *args, **regex_args)
 		return wrapper
 	return decorator
 
 
 def regex_to_topic(regex):
-	return re.sub('\{.*?\}', '*', regex)
+	return re.sub('\{.+?\}', '*', regex)
 
 
 class OscModule(object):

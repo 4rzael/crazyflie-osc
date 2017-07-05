@@ -49,7 +49,6 @@ def lps_node_has_position(method):
 	return wrapped
 
 
-#TODO : Check TOC
 def _log_exists(self, drone_id, log_name):
 	return ('logs' in self.server.drones[drone_id] and
 			log_name in self.server.drones[drone_id]['logs'])
@@ -61,7 +60,20 @@ def log_exists(method):
 		drone_id = int(path_args['drone_id'])
 		log_name = str(path_args['log_name'])
 		if not _log_exists(self, drone_id, log_name):
-			self._error('log name', log_name,' not found in drone', drone_id)
+			self._error('log name', log_name,'not found in drone', drone_id)
+		else:
+			return method(self, *args, **path_args)
+	return wrapped
+
+
+def log_not_started(method):
+	@osc_requires('LOG')
+	@log_exists
+	def wrapped(self, *args, **path_args):
+		drone_id = int(path_args['drone_id'])
+		log_name = str(path_args['log_name'])
+		if self.server.drones[drone_id]['logs'][log_name].started:
+			self._error('log', log_name,'in drone', drone_id, 'already started')
 		else:
 			return method(self, *args, **path_args)
 	return wrapped

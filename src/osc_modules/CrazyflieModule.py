@@ -3,6 +3,15 @@ from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie import Crazyflie
 from .osc_validators import *
 import cflib
+import threading
+
+def set_interval(func, sec):
+    def func_wrapper():
+        set_interval(func, sec)
+        func()
+    t = threading.Timer(sec, func_wrapper)
+    t.start()
+    return t
 
 class CrazyflieModule(OscModule):
 
@@ -17,11 +26,26 @@ class CrazyflieModule(OscModule):
 	def __init__(self, server, base_topic, debug=False):
 		super(CrazyflieModule, self).__init__(server=server, base_topic=base_topic, debug=debug)
 
+		# Send goals to drones every 10ms
+		def send_goal():
+			for drone in self.server.drones.values():
+				if drone['connected']:
+					if drone['emergency']:
+						drone['cf'].commander.send_setpoint(0,0,0,0)
+					elif drone['goal'] is not None:
+						x, y, z, yaw = drone['goal']
+						(drone['cf']
+						.commander
+						.send_setpoint(y, x, yaw, int(z*1000)))
+		set_interval(send_goal, 10.0/1000.0)
+
 
 	def routes(self):
 		self.add_route('/{drone_id}/add', self.osc_add_drone)
 		self.add_route('/{drone_id}/remove', self.osc_remove_drone)
 		self.add_route('/{drone_id}/goal', self.osc_goal)
+		self.add_route('/{drone_id}/goal/stop', self.osc_reset_goal)
+		self.add_route('/{drones}/emergency', self.osc_emergency)
 		self.add_route('/{drones}/lps/{nodes}/update_pos', self.osc_update_lps_pos)
 
 
@@ -40,8 +64,11 @@ class CrazyflieModule(OscModule):
 			self.server.drones[drone_id] = {
 				'radio_url': radio_url,
 				'cf': cf,
-				'connected': False
+				'connected': False,
+				'goal': None,
+				'emergency': False,
 			}
+
 
 			# connection callback
 			def on_connection(uri):
@@ -56,6 +83,15 @@ class CrazyflieModule(OscModule):
 						drones=drone_id,
 						nodes='*')
 
+				# init param module for this drone
+				if self.server.get_module('PARAM'):
+					self.server.get_module('PARAM').add_param_cb(drone_id)
+
+				# Add default loggings for this drone
+				if self.server.get_module('LOG'):
+					self.server.get_module('LOG').add_default_loggers(drone_id)
+
+
 			def on_connection_failed(uri, message):
 				self._error('connection to drone', drone_id, 'failed:', message)
 
@@ -68,9 +104,6 @@ class CrazyflieModule(OscModule):
 			cf.connection_failed.add_callback(on_connection_failed)
 			cf.disconnected.add_callback(on_disconnection)
 
-			# PARAM MODULE
-			if self.server.get_module('PARAM'):
-				self.server.get_module('PARAM').add_param_cb(drone_id)
 
 		if not self.server.drones[drone_id]['connected']:
 			self.server.drones[drone_id]['cf'].open_link(radio_url)
@@ -89,13 +122,24 @@ class CrazyflieModule(OscModule):
 
 		Sends a 3D setpoint to the drone with ID {drone_id}
 		"""
+
 		drone_id = int(path_args['drone_id'])
-		(self.server.drones[drone_id]['cf']
-		.commander.send_setpoint(y, x, yaw, int(z*1000)))
+		self.server.drones[drone_id]['goal'] = (x, y, z, yaw)
+
+	@drone_connected
+	def osc_reset_goal(self, address, *args, **path_args):
+		"""
+		OSC listen: /{drone_id}/goal
+
+		Stops sending goals to the drone with ID {drone_id}
+		"""
+
+		drone_id = int(path_args['drone_id'])
+		self.server.drones[drone_id]['goal'] = None
 
 
 	@drone_exists
-	def osc_remove_drone(self, address, **path_args):
+	def osc_remove_drone(self, address, *args, **path_args):
 		"""
 		OSC listen:
 			/{drone_id}/remove
@@ -104,8 +148,29 @@ class CrazyflieModule(OscModule):
 		"""
 		drone_id = int(path_args['drone_id'])
 		if self.server.drones[drone_id]['connected']:
+			# cut engines
+			self.osc_emergency('', drones=str(drone_id))
+			self.server.drones[drone_id]['cf'].commander.send_setpoint(0,0,0,0)
+			# disconnect
 			self.server.drones[drone_id]['cf'].close_link()
+		# remove
 		del self.server.drones[drone_id]
+
+
+	@multi_drones
+	@drone_exists
+	def osc_emergency(self, address, *args, **path_args):
+		"""
+		OSC listen:
+			/{drones}/emergency
+
+			Sends an emergency signal to drones {drones}.
+			An emergency stops engines and forbid the server to send setpoints to them
+		"""
+
+		drone_id = int(path_args['drone_id'])
+
+		self.server.drones[drone_id]['emergency'] = True
 
 
 	def get_connected_drones(self):

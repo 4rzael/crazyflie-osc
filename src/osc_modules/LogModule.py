@@ -1,12 +1,48 @@
 from .OscModule import OscModule
-from .osc_validators import log_exists, drone_connected, multi_drones
+from .osc_validators import *
 from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie import Crazyflie
 import cflib
+import json
+
+class Logger(object):
+
+
+	def __init__(self, log):
+		self.log = log
+		self.variables = []
+		self.started = False
+
+	def add_variable(self, var, var_type):
+		self.variables.append(var)
+		self.log.add_variable(var, var_type)
+
+	def add_data_received_callback(self, callback):
+		self.log.data_received_cb.add_callback(callback)
+
+	def add_error_callback(self, callback):
+		self.log.error_cb.add_callback(callback)
+
+	def start(self):
+		self.started = True
+		self.log.start()
+
 
 class LogModule(OscModule):
 	"""
 	LogModule class. Implements OSC routes related to crazyflie logging
+
+	OSC publish :
+	/{drone_id}/toc -> json
+	/{drone_id}/toc/{toc_variable} -> str[]
+	/{drone_id}/{log_name} -> value[]
+	/{drone_id}/{log_name}/{toc_variable} -> value
+
+	Default OSC publish :
+	/{drone_id}/position
+	/{drone_id}/battery
+	TODO /{drone_id}/goal
+
 	"""
 
 	@staticmethod
@@ -23,6 +59,7 @@ class LogModule(OscModule):
 		self.add_route('/{drones}/{log_name}/add_variable', self.osc_log_add_variable)
 		self.add_route('/{drones}/{log_name}/start', self.osc_log_start)
 		self.add_route('/{drones}/send_toc', self.osc_send_toc)
+		self.add_route('/{drones}/send_toc/{toc_variable}', self.osc_send_toc_variable)
 
 
 	@multi_drones
@@ -31,7 +68,7 @@ class LogModule(OscModule):
 					log_name, log_ms_period,
 					**path_args):
 		"""
-		OSC listen: /{drones}/add_log
+		OSC listen: /{drones}/add
 
 		:param str {drones}: drones ids separated by a ';'. * for all
 
@@ -43,17 +80,25 @@ class LogModule(OscModule):
 		"""
 
 		drone_id = int(path_args['drone_id'])
-
-		log = LogConfig(name=log_name, period_in_ms=log_ms_period)
+		log_name = str(log_name)
+		log_ms_period = int(log_ms_period)
 
 		if 'logs' not in self.server.drones[drone_id]:
 			self.server.drones[drone_id]['logs'] = {}
 
-		self.server.drones[drone_id]['logs'][log_name] = log
+		if log_name in self.server.drones[drone_id]['logs']:
+			self._error('log', log_name, 'already exists')
+			return
+
+		log = LogConfig(name=log_name, period_in_ms=log_ms_period)
+
+		self.server.drones[drone_id]['logs'][log_name] = Logger(log)
+		self._debug('adding new log:', log_name,'period:', log_ms_period)
 
 
 	@multi_drones
 	@log_exists
+	@log_not_started
 	def osc_log_add_variable(self, address,
 							 variable_name, variable_type,
 							 **path_args):
@@ -74,14 +119,16 @@ class LogModule(OscModule):
 		log_name = str(path_args['log_name'])
 
 		self.server.drones[drone_id]['logs'][log_name].add_variable(variable_name, variable_type)
+		self._debug('adding', variable_name, 'to', log_name)
 
 
 	@multi_drones
 	@log_exists
+	@log_not_started
 	def osc_log_start(self, address, *args,
 					  **path_args):
 		"""
-		OSC listen: /{drones}/{log_name}/add_variable
+		OSC listen: /{drones}/{log_name}/start
 
 		:param str {drones}: drones ids separated by a ';'. * for all
 		:param str {log_name}: the name of the log configuration to start
@@ -91,14 +138,42 @@ class LogModule(OscModule):
 		"""
 		drone_id = int(path_args['drone_id'])
 		log_name = str(path_args['log_name'])
-		log = self.server.drones[drone_id]['logs'][log_name]
+		logger = self.server.drones[drone_id]['logs'][log_name]
 
-		self.server.drones[drone_id]['cf'].log.add_config(log)
+		self.server.drones[drone_id]['cf'].log.add_config(logger.log)
 
-		log.data_received_cb.add_callback(self._on_log_received)
-		log.error_cb.add_callback(self._error)
+		logger.add_data_received_callback(
+			self._on_log_received(drone_id, log_name))
+		logger.add_error_callback(self._error)
 
-		log.start()
+		logger.start()
+
+
+	def _get_toc(self, drone_id):
+		toc = self.server.drones[drone_id]['cf'].log.toc.toc.items()
+		toc = {key: sorted([v for v in value]) for key, value in toc}
+		return toc
+
+
+	@multi_drones
+	@drone_connected
+	def osc_send_toc_variable(self, address, *args,
+					  **path_args):
+		"""
+		OSC listen: /{drones}/send_toc/{toc_variable}
+
+		:param str {drones}: drones ids separated by a ';'. * for all
+		:param str {toc_variable}
+
+		Sends a log TOC variable {toc_variable} from drones {drones} as an array
+		"""
+
+		drone_id = int(path_args['drone_id'])
+		toc_variable = str(path_args['toc_variable'])
+
+		toc = self._get_toc(drone_id)
+		if toc_variable in toc:
+			self._send('/'.join([drone_id, toc_variable]), toc[toc_variable])
 
 
 	@multi_drones
@@ -106,22 +181,62 @@ class LogModule(OscModule):
 	def osc_send_toc(self, address, *args,
 					  **path_args):
 		"""
-		OSC listen: /{drones}send_toc
+		OSC listen: /{drones}/send_toc
 
 		:param str {drones}: drones ids separated by a ';'. * for all
 
-		Sends log TOCs of drones {drones}
+		Sends log TOCs of drones {drones} as JSON
 		"""
+
+		print(address)
 
 		drone_id = int(path_args['drone_id'])
 
-		toc = self.server.drones[drone_id]['cf'].log.toc.toc
-		toc = [{key: sorted([v for v in value])} for key, value in toc.items()]
-		# toc = {key: [elem.name for elem in t.values()] for t in toc}
-		print('TOC')
-		for t in toc:
-			print(t)
+		toc = self._get_toc(drone_id)
 
+		self._send('/'+str(drone_id)+'/toc', json.dumps(toc))
 
-	def _on_log_received(self, *args, **kwargs):
-		print(args, kwargs)
+	def _on_log_received(self, drone_id, log_name):
+		log_name = str(log_name)
+		drone_id = int(drone_id)
+
+		logger = self.server.drones[drone_id]['logs'][log_name]
+		def callback(log_id, log_content, log_object):
+			# send each variable on /{drone_id}/{log_name}/{variable}
+			for var, value in log_content.items():
+				self._send('/'.join([str(drone_id), log_name, var]),
+					value)
+			# send a json on /{drone_id}/{log_name}
+			self._send('/'.join([str(drone_id), log_name]),
+				[log_content[var] for var in logger.variables])
+
+		return callback
+
+	def add_default_loggers(self, drone_id):
+		drone_id = int(drone_id)
+
+		# position -> x y z
+		self.osc_add_log('', 'position', 10,
+			drones=drone_id)
+		self.osc_log_add_variable('', 'kalman.stateX', 'float',
+			drones=drone_id,
+			log_name='position')
+		self.osc_log_add_variable('', 'kalman.stateY', 'float',
+			drones=drone_id,
+			log_name='position')
+		self.osc_log_add_variable('', 'kalman.stateZ', 'float',
+			drones=drone_id,
+			log_name='position')
+		self.osc_log_start('',
+			drones=drone_id,
+			log_name='position')
+		# battery voltage
+		self.osc_add_log('', 'battery', 1000,
+			drones=drone_id)
+		self.osc_log_add_variable('', 'pm.vbat', 'float',
+			drones=drone_id,
+			log_name='battery')
+		self.osc_log_start('',
+			drones=drone_id,
+			log_name='battery')
+

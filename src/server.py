@@ -45,7 +45,7 @@ class Server(object):
 		"""
 		self.modules = {
 			ClientModule.get_name():
-				ClientModule(base_topic='/client', server=self, debug=True),
+				ClientModule(base_topic='/client', server=self, debug=False),
 			CrazyflieModule.get_name():
 				CrazyflieModule(base_topic='/crazyflie', server=self, debug=True),
 			LpsModule.get_name():
