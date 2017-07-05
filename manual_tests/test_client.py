@@ -85,6 +85,9 @@ def run_one(client, line):
 				data = 'NO ARGS PROVIDED'
 			else:
 				data_type = linewords[1]
+				if data_type not in type_to_func:
+					data_type = 'blob'
+					linewords = [''] + linewords
 				data = type_to_func[data_type](linewords[2:])
 			client.send_message(topic, data)
 	except Exception as e:

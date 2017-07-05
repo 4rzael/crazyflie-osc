@@ -2,10 +2,17 @@ from .OscModule import OscModule
 from .osc_validators import param_exists, drone_connected, multi_drones
 from cflib.crazyflie import Crazyflie
 import cflib
+import json
 
 class ParamModule(OscModule):
 	"""
-	ParamModule class. Implements OSC routes related to crazyflie logging
+	ParamModule class. Implements OSC routes related to crazyflie params
+
+	OSC publish :
+	/{drone_id}/toc -> json
+	/{drone_id}/toc/{toc_variable} -> str[]
+	/{drone_id}/{param_group}/{param_name} -> value
+
 	"""
 
 	@staticmethod
@@ -18,6 +25,7 @@ class ParamModule(OscModule):
 	def routes(self):
 		self.add_route('/{drones}/{param_group}/{param_name}/set', self.osc_set_param)
 		self.add_route('/{drones}/send_toc', self.osc_send_toc)
+		self.add_route('/{drones}/send_toc/{toc_variable}', self.osc_send_toc_variable)
 
 
 	@multi_drones
@@ -47,34 +55,68 @@ class ParamModule(OscModule):
 		self.server.drones[drone_id]['cf'].\
 		param.set_value(param_group+'.'+param_name, str(value))
 
+
+	def _get_toc(self, drone_id):
+		toc = self.server.drones[drone_id]['cf'].param.toc.toc.items()
+		toc = {key: sorted([v for v in value]) for key, value in toc}
+		return toc
+
+
+	@multi_drones
+	@drone_connected
+	def osc_send_toc_variable(self, address, *args,
+					  **path_args):
+		"""
+		OSC listen: /{drones}/send_toc/{toc_variable}
+
+		:param str {drones}: drones ids separated by a ';'. * for all
+		:param str {toc_variable}
+
+		Sends a param TOC variable {toc_variable} from drones {drones} as an array
+		"""
+
+		drone_id = int(path_args['drone_id'])
+		toc_variable = str(path_args['toc_variable'])
+
+		toc = self._get_toc(drone_id)
+		if toc_variable in toc:
+			self._send('/'+str(drone_id)+'/toc/'+toc_variable, toc[toc_variable])
+
+
 	@multi_drones
 	@drone_connected
 	def osc_send_toc(self, address, *args,
 					  **path_args):
 		"""
-		OSC listen: /{drones}send_toc
+		OSC listen: /{drones}/send_toc
 
 		:param str {drones}: drones ids separated by a ';'. * for all
 
-		Sends param TOCs of drones {drones}
+		Sends param TOCs of drones {drones} as JSON
 		"""
 
-		drone_id = int(int(path_args['drone_id']))
+		print(address)
 
-		toc = self.server.drones[drone_id]['cf'].param.toc.toc
-		toc = [{key: sorted([v for v in value])} for key, value in toc.items()]
-		# toc = {key: [elem.name for elem in t.values()] for t in toc}
-		print('TOC')
-		for t in toc:
-			print(t)
+		drone_id = int(path_args['drone_id'])
+
+		toc = self._get_toc(drone_id)
+
+		self._send('/'+str(drone_id)+'/toc', json.dumps(toc))
+
 
 
 	def add_param_cb(self, drone_id):
 		if drone_id in self.server.drones and self.server.drones[drone_id]['connected']:
 			for group in self.server.drones[drone_id]['cf'].param.toc.toc:
 				self.server.drones[drone_id]['cf']\
-				.param.add_update_callback(group=group, name=None, cb=self._on_param_update)
+				.param.add_update_callback(group=group, name=None,
+					cb=self._on_param_update(drone_id))
 
 
-	def _on_param_update(self, *args, **kwargs):
-		print(args, kwargs)
+	def _on_param_update(self, drone_id):
+		drone_id = str(drone_id)
+		def callback(param, value):
+			param_group, param_name = param.split('.')
+			self._send('/'.join([drone_id, param_group, param_name]),
+				value)
+		return callback

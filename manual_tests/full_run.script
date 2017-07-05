@@ -1,9 +1,12 @@
-#IMPORT connect_drone_3.script
+/client/add str[] localhost 8787
+
+#IMPORT connect_drone_4.script
 
 #IMPORT set_lps_positions.script
 
 /param/*/kalman/resetEstimation/set int 1
 #WAIT 100
 /param/*/kalman/resetEstimation/set int 0
+#WAIT 100
 
-
+#IMPORT add_pos_log.script
