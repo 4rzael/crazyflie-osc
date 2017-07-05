@@ -3,20 +3,36 @@ An OSC server to control crazyflies
 
 ## Functionalities :
 
-* Drone connection
+* [x] Drone connection
 
-* Sending 3D setpoints
+* [x] Sending 3D position setpoints
 
-* LPS configuration
+* [x] LPS configuration
 
-* Adding OSC listeners for events
+* [x] Drone param system
 
-* Drone param system (write only)
+* [x] Drone logging system
 
-## TODO :
+* [ ] OSC debugging system
 
-* Drone logging system
+* [ ] Unit test
 
-* OSC debugging system
+* [ ] Sphinx documentation
 
-* Sending OSC packets back
+## How to run :
+
+* create a new virtualenv
+
+* install python dependencies `pip3 install -r requirements`
+
+* run the server `cd src; ./server.py`
+
+## How to test :
+
+No unit tests are currently present, but manual test client and server are present.
+
+* run both of them : `cd manual_tests; ./test_client.py` and `cd manual_tests; ./test_server.py`
+
+* write commands in the test_client console.
+
+* alternatively, you can run `./test_client.py --file full_run.py` in order to execute a pre-planned connection (you will need changes in order to accomodate to your setup)
