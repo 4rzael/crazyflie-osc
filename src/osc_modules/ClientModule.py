@@ -21,11 +21,15 @@ class ClientModule(OscModule):
 
 	def osc_add_client(self, address, ip, port):
 		"""
-		OSC listen: /add
-		:param str ip: the client ip to connect to 
-		:param int port: the client port to connect to
+		Adds a new client which will receive OSC messages from crazyflie-osc.
 
-		Adds a new client which will receive OSC messages from crazyflie-osc
+		OSC listen: /add
+
+		:param str ip: the client ip to connect to.
+		:type ip: str.
+		:param int port: the client port to connect to.
+		:type port: int.
+
 		"""
 
 		ip = str(ip)
@@ -40,11 +44,15 @@ class ClientModule(OscModule):
 
 	def osc_remove_client(self, address, ip, port):
 		"""
+		Removes an OSC client.
+		
 		OSC listen: /remove
-		:param str ip: the client ip to connect to 
-		:param int port: the client port to connect to
 
-		Removes an OSC client
+		:param str ip: the client ip to connect to 
+		:type ip: str 
+		:param int port: the client port to connect to
+		:type port: int 
+
 		"""
 
 		ip = str(ip)

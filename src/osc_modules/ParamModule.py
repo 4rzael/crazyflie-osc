@@ -5,8 +5,7 @@ import cflib
 import json
 
 class ParamModule(OscModule):
-	"""
-	ParamModule class. Implements OSC routes related to crazyflie params
+	"""ParamModule class. Implements OSC routes related to crazyflie params
 
 	OSC publish :
 	/{drone_id}/toc -> json
@@ -33,16 +32,20 @@ class ParamModule(OscModule):
 	@drone_connected
 	def osc_set_param(self, address, value,
 					**path_args):
-		"""
+		"""Sets the param named {param_group}.{param_name} in drones {drones}.
+
 		OSC listen: /{drones}/{param_group}/{param_name}/set
 
-		:param str {drones}: drones ids separated by a ';'. * for all
-		:param str {param_group}: group of the param to set
-		:param str {param_name}: name of the param to set
+		:param {drones}: drones ids separated by a ';'. * for all
+		:type {drones}: str.
 
-		:param str value: the value to set to the param
+		:param {param_group}: group of the param to set.
+		:type {param_group}: str.
+		:param {param_name}: name of the param to set.
+		:type {param_name}: str.
 
-		Sets the param named {param_group}.{param_name} in drones {drones}
+		:param value: the value to set to the param
+		:type value: str.
 		"""
 
 		drone_id = int(int(path_args['drone_id']))
@@ -66,13 +69,16 @@ class ParamModule(OscModule):
 	@drone_connected
 	def osc_send_toc_variable(self, address, *args,
 					  **path_args):
-		"""
+		"""Sends a param TOC variable {toc_variable} from drones {drones} as an array.
+
 		OSC listen: /{drones}/send_toc/{toc_variable}
 
-		:param str {drones}: drones ids separated by a ';'. * for all
-		:param str {toc_variable}
+		:param {drones}: drones ids separated by a ';'. * for all.
+		:type {drones}: str.
 
-		Sends a param TOC variable {toc_variable} from drones {drones} as an array
+		:param {toc_variable}: the toc variable name.
+		:type {toc_variable}: str.
+
 		"""
 
 		drone_id = int(path_args['drone_id'])
@@ -87,12 +93,13 @@ class ParamModule(OscModule):
 	@drone_connected
 	def osc_send_toc(self, address, *args,
 					  **path_args):
-		"""
+		"""Sends param TOCs of drones {drones} as JSON.
+
 		OSC listen: /{drones}/send_toc
 
-		:param str {drones}: drones ids separated by a ';'. * for all
+		:param {drones}: drones ids separated by a ';'. * for all.
+		:type {drones}: str.
 
-		Sends param TOCs of drones {drones} as JSON
 		"""
 
 		print(address)

@@ -34,3 +34,11 @@ class TestModule(OscModule):
 
 	def special_call(self, address, *args, **path_args):
 		self._debug('special', path_args)
+
+	def test(self, arg1, arg2):
+		""" Testing sphinx
+
+		:param arg1: hey
+		:param arg2: hello
+		:param {arg3}: my friend
+		"""

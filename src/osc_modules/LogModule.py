@@ -7,7 +7,6 @@ import json
 
 class Logger(object):
 
-
 	def __init__(self, log):
 		self.log = log
 		self.variables = []
@@ -30,17 +29,24 @@ class Logger(object):
 
 class LogModule(OscModule):
 	"""
-	LogModule class. Implements OSC routes related to crazyflie logging
+	LogModule class. Implements OSC routes related to crazyflie logging.
 
 	OSC publish :
+
 	/{drone_id}/toc -> json
+
 	/{drone_id}/toc/{toc_variable} -> str[]
+
 	/{drone_id}/{log_name} -> value[]
+
 	/{drone_id}/{log_name}/{toc_variable} -> value
 
 	Default OSC publish :
+
 	/{drone_id}/position
+
 	/{drone_id}/battery
+
 	TODO /{drone_id}/goal
 
 	"""
@@ -67,16 +73,18 @@ class LogModule(OscModule):
 	def osc_add_log(self, address,
 					log_name, log_ms_period,
 					**path_args):
-		"""
+		""" Adds a logger named log_name to drones {drones}, which sends data every log_ms_period milliseconds.
+
 		OSC listen: /{drones}/add
 
-		:param str {drones}: drones ids separated by a ';'. * for all
+		:param {drones}: drones ids separated by a ';'. * for all
+		:type {drones}: str.
 
-		:param str log_name: the log parameter name
-		:param int log_ms_period: the logging period in ms
+		:param log_name: the log parameter name.
+		:type log_name: str.
 
-		Adds a logger named log_name to drones {drones},
-		which sends data every log_ms_period milliseconds
+		:param log_ms_period: the logging period in ms.
+		:type log_ms_period: int.
 		"""
 
 		drone_id = int(path_args['drone_id'])
@@ -102,17 +110,21 @@ class LogModule(OscModule):
 	def osc_log_add_variable(self, address,
 							 variable_name, variable_type,
 							 **path_args):
-		"""
+		""" Adds a variable {variable_name} of type {variable_type}
+		to the log {log_name} of drones {drones}.
+
 		OSC listen: /{drones}/{log_name}/add_variable
 
-		:param str {drones}: drones ids separated by a ';'. * for all
-		:param str {log_name}: the name of the log configuration
+		:param {drones}: drones ids separated by a ';'. * for all.
+		:type {drones}: str.
+		:param {log_name}: the name of the log configuration.
+		:type {log_name}: str.
 
-		:param str variable_name: the variable name to add
-		:param int variable_type: the variable type
+		:param variable_name: the variable name to add.
+		:type variable_name: str.
+		:param variable_type: the variable type.
+		:type variable_type: int.
 
-		Adds a variable {variable_name} of type {variable_type}
-		to the log {log_name} of drones {drones}
 		"""
 
 		drone_id = int(path_args['drone_id'])
@@ -127,14 +139,15 @@ class LogModule(OscModule):
 	@log_not_started
 	def osc_log_start(self, address, *args,
 					  **path_args):
-		"""
+		""" Starts the logger {log_name} of the drone {drones}.
+
 		OSC listen: /{drones}/{log_name}/start
 
-		:param str {drones}: drones ids separated by a ';'. * for all
-		:param str {log_name}: the name of the log configuration to start
+		:param {drones}: drones ids separated by a ';'. * for all.
+		:type {drones}: str.
+		:param {log_name}: the name of the log configuration to start.
+		:type {log_name}: str.
 
-
-		Starts the logger {log_name} of the drone {drones} 
 		"""
 		drone_id = int(path_args['drone_id'])
 		log_name = str(path_args['log_name'])
@@ -159,13 +172,14 @@ class LogModule(OscModule):
 	@drone_connected
 	def osc_send_toc_variable(self, address, *args,
 					  **path_args):
-		"""
+		""" Sends a log TOC variable {toc_variable} from drones {drones} as an array.
+
 		OSC listen: /{drones}/send_toc/{toc_variable}
 
-		:param str {drones}: drones ids separated by a ';'. * for all
-		:param str {toc_variable}
-
-		Sends a log TOC variable {toc_variable} from drones {drones} as an array
+		:param {drones}: drones ids separated by a ';'. * for all.
+		:type {drones}: str.
+		:param {toc_variable}: the toc variable name.
+		:type {toc_variable}: str.
 		"""
 
 		drone_id = int(path_args['drone_id'])
@@ -180,12 +194,13 @@ class LogModule(OscModule):
 	@drone_connected
 	def osc_send_toc(self, address, *args,
 					  **path_args):
-		"""
-		OSC listen: /{drones}/send_toc
+		""" Sends log TOCs of drones {drones} as JSON.
 
-		:param str {drones}: drones ids separated by a ';'. * for all
+		OSC listen: /{drones}/send_toc.
 
-		Sends log TOCs of drones {drones} as JSON
+		:param {drones}: drones ids separated by a ';'. * for all.
+		:type {drones}: str.
+
 		"""
 
 		print(address)

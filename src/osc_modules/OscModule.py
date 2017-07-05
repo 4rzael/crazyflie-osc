@@ -41,8 +41,11 @@ class OscModule(object):
 	def __init__(self, server, base_topic, debug=False):
 		"""
 		OscModule constructor
-		:param str base_topic: the topic of this module. Every routes in it will be relative to this one
-		:param bool debug: configure either the module should print debug messages
+
+		:param base_topic: the topic of this module. Every routes in it will be relative to this one.
+		:type base_topic: str.
+		:param debug: configure either the module should print debug messages.
+		:type debug: bool.
 		"""
 		self.base_topic = str(base_topic)
 		# remove potential trailing / and add a potential / at the beginning
@@ -57,9 +60,12 @@ class OscModule(object):
 
 	def add_route(self, sub_topic, callback):
 		"""
-		Add a new route to the server (relative to the module base_topic)
-		:param str sub_topic: the topic (relative to base_topic) of this route
-		:param function callback: the route handler
+		Add a new route to the server (relative to the module base_topic).
+
+		:param sub_topic: the topic (relative to base_topic) of this route.
+		:type sub_topic: str.
+		:param callback: the route handler.
+		:type callback: function.
 		"""
 		full_topic_regex = self._topic_reg(sub_topic)
 		full_topic = regex_to_topic(full_topic_regex)
@@ -69,7 +75,7 @@ class OscModule(object):
 
 	def _debug(self, *args):
 		"""
-		Print a debug message (todo: also send to an OSC topic)
+		Print a debug message (todo: also send to an OSC topic).
 		"""
 		if self.debug:
 			args = args + (Style.RESET_ALL,)
@@ -78,7 +84,7 @@ class OscModule(object):
 
 	def _error(self, *args):
 		"""
-		Print an error message on stderr (todo: also send to an OSC topic)
+		Print an error message on stderr (todo: also send to an OSC topic).
 		"""
 		args = args + (Style.RESET_ALL,)
 		print(Fore.RED + '['+self.get_name()+' ERROR]', *args, file=sys.stderr)
@@ -91,8 +97,10 @@ class OscModule(object):
 
 	def __call__(self, dispatcher):
 		"""
-		Builds the routes of this module
-		:param Dispatcher dispatcher: the python-osc dispatcher
+		Builds the routes of this module.
+
+		:param dispatcher: the python-osc dispatcher.
+		:type dispatcher: Dispatcher.
 		"""
 		self.dispatcher = dispatcher
 		self.routes()
@@ -112,6 +120,6 @@ class OscModule(object):
 
 	def routes(self):
 		"""
-		Add your routes here with self.add_route() calls
+		Add your routes here with self.add_route() calls.
 		"""
 		raise NotImplementedError

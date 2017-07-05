@@ -1,7 +1,9 @@
 import traceback
+from functools import wraps
 
 def osc_requires(osc_module):
 	def decorator(method):
+		@wraps(method)
 		def wrapped(self, *args, **kwargs):
 			if self.server.get_module(osc_module) is None:
 				self._error('required osc_module not found in server:', osc_module)
@@ -15,6 +17,7 @@ def _drone_exists(self, drone_id):
 	return drone_id in self.server.drones
 
 def drone_exists(method):
+	@wraps(method)
 	@osc_requires('CRAZYFLIE')
 	def wrapped(self, *args, **path_args):
 		drone_id = int(path_args['drone_id'])
@@ -29,6 +32,7 @@ def _lps_node_exists(self, node_id):
 	return node_id < self.server.lps_node_number
 
 def lps_node_exists(method):
+	@wraps(method)
 	@osc_requires('LPS')
 	def wrapped(self, *args, **path_args):
 		node_id = int(path_args['node_id'])
@@ -39,6 +43,7 @@ def lps_node_exists(method):
 	return wrapped
 
 def lps_node_has_position(method):
+	@wraps(method)
 	@lps_node_exists
 	def wrapped(self, *args, **path_args):
 		node_id = int(path_args['node_id'])
@@ -54,6 +59,7 @@ def _log_exists(self, drone_id, log_name):
 			log_name in self.server.drones[drone_id]['logs'])
 
 def log_exists(method):
+	@wraps(method)
 	@osc_requires('LOG')
 	@drone_exists
 	def wrapped(self, *args, **path_args):
@@ -67,6 +73,7 @@ def log_exists(method):
 
 
 def log_not_started(method):
+	@wraps(method)
 	@osc_requires('LOG')
 	@log_exists
 	def wrapped(self, *args, **path_args):
@@ -80,6 +87,7 @@ def log_not_started(method):
 
 
 def one_drone_is_connected(method):
+	@wraps(method)
 	@osc_requires('CRAZYFLIE')
 	def wrapped(self, *args, **path_args):
 		if len(self.server.get_module('CRAZYFLIE').get_connected_drones()) is 0:
@@ -90,6 +98,7 @@ def one_drone_is_connected(method):
 
 
 def drone_connected(method):
+	@wraps(method)
 	@drone_exists
 	def wrapped(self, *args, **path_args):
 		drone_id = int(path_args['drone_id'])
@@ -105,6 +114,7 @@ def _param_exists(self, drone_id, param_group, param_name):
 			param_name in self.server.drones[drone_id]['cf'].param.toc.toc[param_group])
 
 def param_exists(method):
+	@wraps(method)
 	@osc_requires('PARAM')
 	@drone_connected
 	def wrapped(self, *args, **path_args):
@@ -122,6 +132,7 @@ def param_exists(method):
 ## MULTI DRONES OSC VALIDATORS
 
 def multi_drones(method):
+	@wraps(method)
 	@osc_requires('CRAZYFLIE')
 	def wrapped(self, *args, **path_args):
 		drones = str(path_args['drones'])
@@ -144,6 +155,7 @@ def multi_drones(method):
 ## MULTI LPS NODE OSC VALIDATORS
 
 def multi_nodes(method):
+	@wraps(method)
 	@osc_requires('LPS')
 	def wrapped(self, *args, **path_args):
 		nodes = str(path_args['nodes'])
