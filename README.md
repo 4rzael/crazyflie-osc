@@ -17,7 +17,7 @@ An OSC server to control crazyflies
 
 * [ ] Unit test
 
-* [ ] Sphinx documentation
+* [x] Sphinx documentation
 
 ## How to run :
 
