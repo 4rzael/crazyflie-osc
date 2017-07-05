@@ -23,10 +23,13 @@ class LpsModule(OscModule):
 
 	def osc_set_node_number(self, address, number):
 		"""
-		OSC listen: /set_node_number
-		:param int number: the number of LPS nodes in the system
+		Set the number of LPS nodes.
 
-		Set the number of LPS nodes
+		OSC listen: /set_node_number
+
+		:param number: the number of LPS nodes in the system.
+		:type number: int.
+
 		"""
 
 		number = int(number)
@@ -46,15 +49,21 @@ class LpsModule(OscModule):
 	@lps_node_exists
 	def osc_set_node_position(self, address, x, y, z, **path_args):
 		"""
-		OSC listen: /{node_id}/set_position
-		:param int {node_id}: the id of the node to change (starting at 0)
-
-		:param float x: the X position
-		:param float y: the Y position
-		:param float z: the Z position
-
 		Set the position of the LPS with the ID {node_id}.
 		WARNING : Needs a connected drone.
+
+		OSC listen: /{node_id}/set_position
+
+		:param {node_id}: the id of the node to change (starting at 0).
+		:type {node_id}: int
+
+		:param x: the X position.
+		:type x: float.
+		:param y: the Y position.
+		:type y: float.
+		:param z: the Z position.
+		:type z: float.
+
 		"""
 
 		node_id = int(path_args['node_id'])
@@ -78,16 +87,21 @@ class LpsModule(OscModule):
 	@lps_node_exists
 	def osc_reboot(self, address, reboot_bootloader=False, **path_args):
 		"""
-		OSC listen: /{nodes}/reboot
-		:param str {nodes}: nodes ids separated by a ';'. * for all
-
-		:param bool reboot_bootloader: default to False.\
-			Either it should be rebooted in bootloader mode instead of firmware
-		:param float y: the Y position
-		:param float z: the Z position
-
 		Set the position of LPS nodes with IDs {nodes}.
 		WARNING : Needs a connected drone.
+
+		OSC listen: /{nodes}/reboot
+
+		:param {nodes}: nodes ids separated by a ';'. * for all
+		:type {nodes}: str.
+
+		:param reboot_bootloader: default to False.\
+			Either it should be rebooted in bootloader mode instead of firmware.
+		:type reboot_bootloader: bool.
+		:param y: the Y position.
+		:type y: float.
+		:param z: the Z position.
+		:type z: float.
 		"""
 
 		node_id = int(path_args['node_id'])

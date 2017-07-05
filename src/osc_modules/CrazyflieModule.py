@@ -51,10 +51,13 @@ class CrazyflieModule(OscModule):
 
 	def osc_add_drone(self, address, radio_url, **path_args):
 		"""
-		OSC listen: /{drone_id}/add
-		:param str radio_url: the radio url of the drone
+		Adds a new drone with the ID {drone_id} and tries to connect on the URL radio_url.
 
-		Adds a new drone with the ID {drone_id} and tries to connect on the URL radio_url
+		OSC listen: /{drone_id}/add
+		
+		:param radio_url: the radio url of the drone.
+		:type radio_url: str.
+
 		"""
 		drone_id = int(path_args['drone_id'])
 		self._debug('adding drone', drone_id, 'at url', radio_url)
@@ -114,13 +117,22 @@ class CrazyflieModule(OscModule):
 	@drone_connected
 	def osc_goal(self, address, x, y, z, yaw, **path_args):
 		"""
-		OSC listen: /{drone_id}/goal
-		:param float x: the X position
-		:param float y: the Y position
-		:param float z: the Z position
-		:param float yaw: the yaw position
+		Sends a 3D setpoint to the drone with ID {drone_id}.
 
-		Sends a 3D setpoint to the drone with ID {drone_id}
+		OSC listen: /{drone_id}/goal
+
+		:param x: the X position.
+		:type x: float.
+
+		:param y: the Y position.
+		:type y: float.
+
+		:param z: the Z position.
+		:type z: float.
+
+		:param yaw: the yaw position.
+		:type yaw: float.
+
 		"""
 
 		drone_id = int(path_args['drone_id'])
@@ -129,9 +141,10 @@ class CrazyflieModule(OscModule):
 	@drone_connected
 	def osc_reset_goal(self, address, *args, **path_args):
 		"""
+		Stops sending goals to the drone with ID {drone_id}
+		
 		OSC listen: /{drone_id}/goal
 
-		Stops sending goals to the drone with ID {drone_id}
 		"""
 
 		drone_id = int(path_args['drone_id'])
@@ -141,10 +154,10 @@ class CrazyflieModule(OscModule):
 	@drone_exists
 	def osc_remove_drone(self, address, *args, **path_args):
 		"""
-		OSC listen:
-			/{drone_id}/remove
+		Disconnects and remove the drone with the given ID
 
-			Disconnects and remove the drone with the given ID
+		OSC listen: /{drone_id}/remove
+
 		"""
 		drone_id = int(path_args['drone_id'])
 		if self.server.drones[drone_id]['connected']:
@@ -161,11 +174,12 @@ class CrazyflieModule(OscModule):
 	@drone_exists
 	def osc_emergency(self, address, *args, **path_args):
 		"""
+		Sends an emergency signal to drones {drones}.
+		An emergency stops engines and forbid the server to send setpoints to them
+
 		OSC listen:
 			/{drones}/emergency
 
-			Sends an emergency signal to drones {drones}.
-			An emergency stops engines and forbid the server to send setpoints to them
 		"""
 
 		drone_id = int(path_args['drone_id'])
@@ -186,12 +200,15 @@ class CrazyflieModule(OscModule):
 	def osc_update_lps_pos(self, address, *args,
 		**path_args):
 		"""
+		Sends new lps nodes {nodes} positions to drones {drones} params
+
 		OSC listen: /{drones}/lps/{nodes}/update_pos
 		
-		:param str {drones}: drones ids separated by a ';'. * for all
-		:param str {nodes}: nodes ids separated by a ';'. * for all
+		:param {drones}: drones ids separated by a ';'. * for all
+		:type {drones}: str.
+		:param {nodes}: nodes ids separated by a ';'. * for all
+		:type {nodes}: str.
 
-		Sends new lps nodes {nodes} positions to drones {drones} params
 		"""
 
 		drone_id = path_args['drone_id']
