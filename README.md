@@ -1,6 +1,8 @@
 # crazyflie-osc
 An OSC server to control crazyflies
 
+#### NOTE : OSC documentation in the [project wiki](https://github.com/4rzael/crazyflie-osc/wiki)
+
 ## Functionalities :
 
 * [x] Drone connection
