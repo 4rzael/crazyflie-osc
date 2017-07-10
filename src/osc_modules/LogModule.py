@@ -39,7 +39,7 @@ class LogModule(OscModule):
 
 	/{drone_id}/{log_name} -> value[]
 
-	/{drone_id}/{log_name}/{toc_variable} -> value
+	/{drone_id}/{log_name}/{variable_name} -> value
 
 	Default OSC publish :
 
