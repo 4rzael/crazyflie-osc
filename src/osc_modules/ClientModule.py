@@ -70,4 +70,7 @@ class ClientModule(OscModule):
 		self._debug('broadcasting to', address)
 
 		for key, value in self.server.osc_clients.items():
-			value.send_message(address, data)
+			try:
+				value.send_message(address, data)
+			except BlockingIOError as e:
+				pass
