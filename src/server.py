@@ -12,6 +12,8 @@ from pythonosc import dispatcher
 from pythonosc import osc_server
 from pythonosc import udp_client
 
+from threading import Thread
+
 import cflib
 
 class Server(object):
@@ -19,6 +21,9 @@ class Server(object):
 	The main server
 	"""
 	def __init__(self):
+		self._osc_server = None
+		self._osc_server_thread = None
+
 		self.modules = {}
 
 		self.dispatcher = dispatcher.Dispatcher()
@@ -39,11 +44,18 @@ class Server(object):
 		"""
 		Build the server routes.
 		Routes :
+		/server/* -> See ServerModule
 		/client/* -> See ClientModule
 		/crazyflie/* -> See CrazyflieModule
 		/lps/* -> See LpsModule
+		/log/* -> See LogModule
+		/param/* -> See ParamModule
 		"""
+
 		self.modules = {
+			ServerModule.get_name():
+				ServerModule(base_topic='/server', server=self, debug=True),
+
 			ClientModule.get_name():
 				ClientModule(base_topic='/client', server=self, debug=False),
 			CrazyflieModule.get_name():
@@ -67,12 +79,20 @@ class Server(object):
 	def run(self, args):
 		self.ip = args.ip
 		self.port = args.port
-		server = osc_server.ThreadingOSCUDPServer(
+		self._osc_server = osc_server.ThreadingOSCUDPServer(
 			(args.ip, args.port), self.dispatcher)
-		print("Serving on {}".format(server.server_address))
-		cflib.crtp.init_drivers(enable_debug_driver=False)
-		server.serve_forever()
-		
+		print("Serving on {}".format(self._osc_server.server_address))
+		self._osc_server_thread = Thread(target=self._osc_server.serve_forever)
+		self._osc_server_thread.start()
+		self._osc_server_thread.join()
+		self._osc_server_thread = None
+		self._osc_server = None
+
+
+	def stop(self):
+		if self._osc_server:
+			print('stopping server')
+			self._osc_server.shutdown()
 
 if __name__ == "__main__":
 
@@ -89,6 +109,23 @@ if __name__ == "__main__":
 		type=int, default=5005, help="The port to listen on")
 	args = parser.parse_args()
 
-	server = Server()
-	server.build_routes()
-	server.run(args)
+	cflib.crtp.init_drivers(enable_debug_driver=False)
+	server = None
+
+	# ctrl+c killing
+	import signal
+	import sys
+	import os
+	__main_should_run = True
+	def sigint_handler(sig, frame):
+		global __main_should_run
+		__main_should_run = False
+		if server is not None:
+			server.stop()
+	signal.signal(signal.SIGINT, sigint_handler)
+
+	while __main_should_run:
+		server = Server()
+		server.build_routes()
+		server.run(args)
+	os.kill(os.getpid(), signal.SIGTERM)

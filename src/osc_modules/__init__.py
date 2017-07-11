@@ -4,3 +4,4 @@ from .CrazyflieModule import CrazyflieModule
 from .ClientModule import ClientModule
 from .LogModule import LogModule
 from .ParamModule import ParamModule
+from .ServerModule import ServerModule
