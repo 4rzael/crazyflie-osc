@@ -34,6 +34,7 @@ class CrazyflieModule(OscModule):
 						drone['cf'].commander.send_setpoint(0,0,0,0)
 					elif drone['goal'] is not None:
 						x, y, z, yaw = drone['goal']
+						z = max(0, z) # do not send negative z waypoints
 						(drone['cf']
 						.commander
 						.send_setpoint(y, x, yaw, int(z*1000)))
