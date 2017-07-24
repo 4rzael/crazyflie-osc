@@ -13,6 +13,13 @@ def osc_requires(osc_module):
 	return decorator
 
 
+def locks_drones(method):
+	@wraps(method)
+	def wrapped(self, *args, **kwargs):
+		with self.server.drones as _: # locks the dictionary
+			return method(self, *args, **kwargs)
+	return wrapped
+
 def _drone_exists(self, drone_id):
 	return drone_id in self.server.drones
 
@@ -61,6 +68,7 @@ def _log_exists(self, drone_id, log_name):
 def log_exists(method):
 	@wraps(method)
 	@osc_requires('LOG')
+	@locks_drones
 	@drone_exists
 	def wrapped(self, *args, **path_args):
 		drone_id = int(path_args['drone_id'])

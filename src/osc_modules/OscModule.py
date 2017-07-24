@@ -1,11 +1,14 @@
 import re
 import sys
 
+from functools import wraps
+
 from colorama import Fore, Style
 from .osc_validators import osc_requires
 
 def regexed(regex):
 	def decorator(method):
+		@wraps(method)
 		def wrapper(address, *args):
 			# switch every {name} to "(P<name>.*)" in order to make a real regex
 			pattern = re.sub('\{(.+?)\}', '(?P<\\1>.+)', regex)

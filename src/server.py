@@ -28,7 +28,7 @@ class Server(object):
 
 		self.dispatcher = dispatcher.Dispatcher()
 		# DroneModule
-		self.drones = {}
+		self.drones = utils.ThreadSafeDict();
 		# ClientModule
 		self.osc_clients = {}
 		# LpsModule
@@ -91,7 +91,12 @@ class Server(object):
 
 	def stop(self):
 		if self._osc_server:
-			print('stopping server')
+			print('stopping server', self.drones)
+			with self.drones as drones:
+				drones_ids = [k for k in drones.keys()]
+				for did in drones_ids:
+					self.get_module('CRAZYFLIE').osc_remove_drone('', drone_id=did)
+			self.get_module('CRAZYFLIE').stop()
 			self._osc_server.shutdown()
 
 if __name__ == "__main__":
@@ -118,10 +123,15 @@ if __name__ == "__main__":
 	import os
 	__main_should_run = True
 	def sigint_handler(sig, frame):
+		global server
 		global __main_should_run
 		__main_should_run = False
 		if server is not None:
 			server.stop()
+			server = None
+		else:
+			os.kill(os.getpid(), signal.SIGTERM)
+
 	signal.signal(signal.SIGINT, sigint_handler)
 
 	while __main_should_run:

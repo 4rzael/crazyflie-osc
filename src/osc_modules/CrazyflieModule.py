@@ -5,13 +5,13 @@ from .osc_validators import *
 import cflib
 import threading
 
-def set_interval(func, sec):
-    def func_wrapper():
-        set_interval(func, sec)
-        func()
-    t = threading.Timer(sec, func_wrapper)
-    t.start()
-    return t
+def set_interval(func, sec, *args, **kwargs):
+	def func_wrapper():
+		set_interval(func, sec, *args, **kwargs)
+		func(*args, **kwargs)
+	t = threading.Timer(sec, func_wrapper)
+	t.start()
+	return t
 
 class CrazyflieModule(OscModule):
 
@@ -23,11 +23,13 @@ class CrazyflieModule(OscModule):
 	def get_name():
 		return 'CRAZYFLIE'
 
+
 	def __init__(self, server, base_topic, debug=False):
 		super(CrazyflieModule, self).__init__(server=server, base_topic=base_topic, debug=debug)
 
 		# Send goals to drones every 10ms
-		def send_goal():
+		@locks_drones
+		def send_goal(self):
 			for drone in self.server.drones.values():
 				if drone['connected']:
 					if drone['emergency']:
@@ -38,7 +40,11 @@ class CrazyflieModule(OscModule):
 						(drone['cf']
 						.commander
 						.send_setpoint(y, x, yaw, int(z*1000)))
-		set_interval(send_goal, 10.0/1000.0)
+		self.goal_timer = set_interval(send_goal, 10.0/1000.0, self)
+
+
+	def stop(self):
+		self.goal_timer.cancel()
 
 
 	def routes(self):
@@ -50,6 +56,7 @@ class CrazyflieModule(OscModule):
 		self.add_route('/{drones}/lps/{nodes}/update_pos', self.osc_update_lps_pos)
 
 
+	@locks_drones
 	def osc_add_drone(self, address, radio_url, **path_args):
 		"""
 		Adds a new drone with the ID {drone_id} and tries to connect on the URL radio_url.
@@ -101,7 +108,9 @@ class CrazyflieModule(OscModule):
 
 			def on_disconnection(uri):
 				self._error('Drone', drone_id, 'disconnected')
-				self.server.drones[drone_id]['connected'] = False
+				with self.server.drones as drones:
+					if drone_id in drones:
+						drones[drone_id]['connected'] = False
 
 			# start the connection
 			cf.connected.add_callback(on_connection)
