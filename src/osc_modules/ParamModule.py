@@ -1,5 +1,5 @@
 from .OscModule import OscModule
-from .osc_validators import param_exists, drone_connected, multi_drones
+from .osc_validators import *
 from cflib.crazyflie import Crazyflie
 import cflib
 import json
@@ -111,7 +111,7 @@ class ParamModule(OscModule):
 		self._send('/'+str(drone_id)+'/toc', json.dumps(toc))
 
 
-
+	@locks_drones
 	def add_param_cb(self, drone_id):
 		if drone_id in self.server.drones and self.server.drones[drone_id]['connected']:
 			for group in self.server.drones[drone_id]['cf'].param.toc.toc:

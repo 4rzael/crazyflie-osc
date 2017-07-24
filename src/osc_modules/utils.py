@@ -2,7 +2,7 @@ import threading
 from functools import wraps
 
 # defines wether the dictionary can only be accessed with locking or not
-THREADSAFEDICT_STRICT_MODE = True
+THREADSAFEDICT_STRICT_MODE = False
 
 def check_locked(method):
 	if THREADSAFEDICT_STRICT_MODE is not True:
@@ -12,8 +12,6 @@ def check_locked(method):
 		def wrapped(self, *args, **kwargs):
 			if self._locked is False:
 				raise Exception('ACCESS TO DICT WITHOUT LOCK')
-			else:
-				print("OK")
 			return method(self, *args, **kwargs)
 		return wrapped
 
