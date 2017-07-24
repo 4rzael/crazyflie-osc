@@ -113,6 +113,7 @@ class OscModule(object):
 			self._debug('>', route)
 		return dispatcher
 
+
 	# def add_submodule(self, submodule, subtopic, *args, **kwargs):
 	# 	if self.dispatcher is None:
 	# 		print('Cannot add submodule : no dispatcher found')
@@ -120,9 +121,15 @@ class OscModule(object):
 	# 	sm = submodule(base_topic=self._topic(subtopic), *args, **kwargs)
 	# 	return sm(lambda dispatcher:dispatcher)(self.dispatcher)
 
-
 	def routes(self):
 		"""
 		Add your routes here with self.add_route() calls.
 		"""
 		raise NotImplementedError
+
+
+	def stop(self):
+		"""
+		Function called on server stop
+		"""
+		pass

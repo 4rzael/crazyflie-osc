@@ -5,13 +5,13 @@ from .osc_validators import *
 import cflib
 import threading
 
-def set_interval(func, sec, *args, **kwargs):
-	def func_wrapper():
-		set_interval(func, sec, *args, **kwargs)
-		func(*args, **kwargs)
-	t = threading.Timer(sec, func_wrapper)
-	t.start()
-	return t
+def set_interval(func, interval, *args, **kwargs):
+    stopped = threading.Event()
+    def loop():
+        while not stopped.wait(interval): # the first call is in `interval` secs
+            func(*args, **kwargs)
+    threading.Thread(target=loop).start()
+    return stopped.set
 
 class CrazyflieModule(OscModule):
 
@@ -40,11 +40,7 @@ class CrazyflieModule(OscModule):
 						(drone['cf']
 						.commander
 						.send_setpoint(y, x, yaw, int(z*1000)))
-		self.goal_timer = set_interval(send_goal, 10.0/1000.0, self)
-
-
-	def stop(self):
-		self.goal_timer.cancel()
+		self.stop_goal_timer = set_interval(send_goal, 10.0/1000.0, self)
 
 
 	def routes(self):
@@ -54,6 +50,16 @@ class CrazyflieModule(OscModule):
 		self.add_route('/{drone_id}/goal/stop', self.osc_reset_goal)
 		self.add_route('/{drones}/emergency', self.osc_emergency)
 		self.add_route('/{drones}/lps/{nodes}/update_pos', self.osc_update_lps_pos)
+
+
+	@locks_drones
+	def stop(self):
+		drones_ids = [k for k in self.server.drones.keys()]
+		for did in drones_ids:
+			self.osc_remove_drone('', drone_id=did)
+
+		self.stop_goal_timer()
+
 
 
 	@locks_drones

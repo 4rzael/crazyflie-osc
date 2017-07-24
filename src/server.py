@@ -68,8 +68,7 @@ class Server(object):
 				ParamModule(base_topic='/param', server=self, debug=True),
 
 			TestModule.get_name():
-				TestModule(base_topic='/test', server=self, debug=True),
-
+				TestModule(base_topic='/test', server=self, debug=False),
 		}
 
 		for module in self.modules:
@@ -92,11 +91,8 @@ class Server(object):
 	def stop(self):
 		if self._osc_server:
 			print('stopping server', self.drones)
-			with self.drones as drones:
-				drones_ids = [k for k in drones.keys()]
-				for did in drones_ids:
-					self.get_module('CRAZYFLIE').osc_remove_drone('', drone_id=did)
-			self.get_module('CRAZYFLIE').stop()
+			for module in self.modules.values():
+				module.stop()
 			self._osc_server.shutdown()
 
 if __name__ == "__main__":

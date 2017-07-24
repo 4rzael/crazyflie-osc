@@ -1,5 +1,6 @@
 from .OscModule import OscModule
 from .osc_validators import *
+from .CrazyflieModule import set_interval
 
 class TestModule(OscModule):
 	@staticmethod
@@ -9,6 +10,13 @@ class TestModule(OscModule):
 	def __init__(self, server, base_topic, debug=True):
 		super(TestModule, self).__init__(server=server, base_topic=base_topic, debug=debug)
 		self.name = self.get_name()
+
+		self.tick = 0
+		def send_tick():
+			self.tick += 1
+			self._debug(self.tick)
+			self._send('/tick', self.tick)
+		self.stop_tick_timer = set_interval(send_tick, 0.1)
 
 	def routes(self):
 		self.add_route('/vector', self.test_vector)
@@ -35,10 +43,5 @@ class TestModule(OscModule):
 	def special_call(self, address, *args, **path_args):
 		self._debug('special', path_args)
 
-	def test(self, arg1, arg2):
-		""" Testing sphinx
-
-		:param arg1: hey
-		:param arg2: hello
-		:param {arg3}: my friend
-		"""
+	def stop(self):
+		self.stop_tick_timer()
