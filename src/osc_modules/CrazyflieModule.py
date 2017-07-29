@@ -33,7 +33,7 @@ class CrazyflieModule(OscModule):
 			for drone in self.server.drones.values():
 				if drone['connected']:
 					if drone['emergency']:
-						drone['cf'].commander.send_setpoint(0,0,0,0)
+						drone['cf'].commander.send_stop_setpoint()
 					elif drone['goal'] is not None:
 						x, y, z, yaw = drone['goal']
 						z = max(0, z) # do not send negative z waypoints
@@ -200,6 +200,7 @@ class CrazyflieModule(OscModule):
 		"""
 
 		drone_id = int(path_args['drone_id'])
+		self._debug('Emergency on drone', drone_id)
 
 		self.server.drones[drone_id]['emergency'] = True
 

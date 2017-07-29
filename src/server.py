@@ -67,8 +67,8 @@ class Server(object):
 			ParamModule.get_name():
 				ParamModule(base_topic='/param', server=self, debug=True),
 
-			TestModule.get_name():
-				TestModule(base_topic='/test', server=self, debug=False),
+			#TestModule.get_name():
+			#	TestModule(base_topic='/test', server=self, debug=False),
 		}
 
 		for module in self.modules:

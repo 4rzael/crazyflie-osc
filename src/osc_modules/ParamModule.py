@@ -25,6 +25,7 @@ class ParamModule(OscModule):
 		self.add_route('/{drones}/{param_group}/{param_name}/set', self.osc_set_param)
 		self.add_route('/{drones}/send_toc', self.osc_send_toc)
 		self.add_route('/{drones}/send_toc/{toc_variable}', self.osc_send_toc_variable)
+		self.add_route('/{drones}/get_all_values', self.osc_get_all_values)
 
 
 	@multi_drones
@@ -59,6 +60,7 @@ class ParamModule(OscModule):
 		param.set_value(param_group+'.'+param_name, str(value))
 
 
+	@locks_drones
 	def _get_toc(self, drone_id):
 		toc = self.server.drones[drone_id]['cf'].param.toc.toc.items()
 		toc = {key: sorted([v for v in value]) for key, value in toc}
@@ -109,6 +111,23 @@ class ParamModule(OscModule):
 		toc = self._get_toc(drone_id)
 
 		self._send('/'+str(drone_id)+'/toc', json.dumps(toc))
+
+
+	@multi_drones
+	@drone_connected
+	@locks_drones
+	def osc_get_all_values(self, address, *args, **path_args):
+		"""Sends all param values of drones {drones}
+
+		OSC listen: /{drones}/get_all_values
+
+		:param {drones}: drones ids separated by a ';'. * for all.
+		:type {drones}: str.
+
+		"""
+		drone_id = int(path_args['drone_id'])
+
+		self.server.drones[drone_id]['cf'].param.request_update_of_all_params()
 
 
 	@locks_drones
