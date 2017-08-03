@@ -28,7 +28,7 @@ class Server(object):
 
 		self.dispatcher = dispatcher.Dispatcher()
 		# DroneModule
-		self.drones = utils.ThreadSafeDict();
+		self.drones = {};
 		# ClientModule
 		self.osc_clients = {}
 		# LpsModule
@@ -44,7 +44,6 @@ class Server(object):
 		"""
 		Build the server routes.
 		Routes :
-		/server/* -> See ServerModule
 		/client/* -> See ClientModule
 		/crazyflie/* -> See CrazyflieModule
 		/lps/* -> See LpsModule
@@ -53,9 +52,6 @@ class Server(object):
 		"""
 
 		self.modules = {
-			ServerModule.get_name():
-				ServerModule(base_topic='/server', server=self, debug=True),
-
 			ClientModule.get_name():
 				ClientModule(base_topic='/client', server=self, debug=False),
 			CrazyflieModule.get_name():
@@ -117,11 +113,9 @@ if __name__ == "__main__":
 	import signal
 	import sys
 	import os
-	__main_should_run = True
 	def sigint_handler(sig, frame):
 		global server
 		global __main_should_run
-		__main_should_run = False
 		if server is not None:
 			server.stop()
 			server = None
@@ -130,8 +124,7 @@ if __name__ == "__main__":
 
 	signal.signal(signal.SIGINT, sigint_handler)
 
-	while __main_should_run:
-		server = Server()
-		server.build_routes()
-		server.run(args)
+	server = Server()
+	server.build_routes()
+	server.run(args)
 	os.kill(os.getpid(), signal.SIGTERM)

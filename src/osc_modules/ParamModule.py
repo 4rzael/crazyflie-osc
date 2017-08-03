@@ -60,7 +60,6 @@ class ParamModule(OscModule):
 		param.set_value(param_group+'.'+param_name, str(value))
 
 
-	@locks_drones
 	def _get_toc(self, drone_id):
 		toc = self.server.drones[drone_id]['cf'].param.toc.toc.items()
 		toc = {key: sorted([v for v in value]) for key, value in toc}
@@ -115,7 +114,6 @@ class ParamModule(OscModule):
 
 	@multi_drones
 	@drone_connected
-	@locks_drones
 	def osc_get_all_values(self, address, *args, **path_args):
 		"""Sends all param values of drones {drones}
 
@@ -130,7 +128,6 @@ class ParamModule(OscModule):
 		self.server.drones[drone_id]['cf'].param.request_update_of_all_params()
 
 
-	@locks_drones
 	def add_param_cb(self, drone_id):
 		if drone_id in self.server.drones and self.server.drones[drone_id]['connected']:
 			for group in self.server.drones[drone_id]['cf'].param.toc.toc:

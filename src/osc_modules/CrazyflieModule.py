@@ -28,7 +28,7 @@ class CrazyflieModule(OscModule):
 		super(CrazyflieModule, self).__init__(server=server, base_topic=base_topic, debug=debug)
 
 		# Send goals to drones every 10ms
-		@locks_drones
+
 		def send_goal(self):
 			for drone in self.server.drones.values():
 				if drone['connected']:
@@ -52,7 +52,6 @@ class CrazyflieModule(OscModule):
 		self.add_route('/{drones}/lps/{nodes}/update_pos', self.osc_update_lps_pos)
 
 
-	@locks_drones
 	def stop(self):
 		drones_ids = [k for k in self.server.drones.keys()]
 		for did in drones_ids:
@@ -62,7 +61,6 @@ class CrazyflieModule(OscModule):
 
 
 
-	@locks_drones
 	def osc_add_drone(self, address, radio_url, **path_args):
 		"""
 		Adds a new drone with the ID {drone_id} and tries to connect on the URL radio_url.
@@ -89,24 +87,23 @@ class CrazyflieModule(OscModule):
 
 			# connection callback
 			def on_connection(uri):
-				with self.server.drones as drones:
-					self._debug('drone', drone_id, 'connected')
-					drones[drone_id]['connected'] = True
-					(drones[drone_id]['cf'].param.set_value('flightmode.posSet', '1'))
+				self._debug('drone', drone_id, 'connected')
+				self.server.drones[drone_id]['connected'] = True
+				(self.server.drones[drone_id]['cf'].param.set_value('flightmode.posSet', '1'))
 
-					# Send LPS nodes positions to the drone
-					if self.server.get_module('LPS'):
-						self.osc_update_lps_pos('',
-							drones=drone_id,
-							nodes='*')
+				# Send LPS nodes positions to the drone
+				if self.server.get_module('LPS'):
+					self.osc_update_lps_pos('',
+						drones=drone_id,
+						nodes='*')
 
-					# init param module for this drone
-					if self.server.get_module('PARAM'):
-						self.server.get_module('PARAM').add_param_cb(drone_id)
+				# init param module for this drone
+				if self.server.get_module('PARAM'):
+					self.server.get_module('PARAM').add_param_cb(drone_id)
 
-					# Add default loggings for this drone
-					if self.server.get_module('LOG'):
-						self.server.get_module('LOG').add_default_loggers(drone_id)
+				# Add default loggings for this drone
+				if self.server.get_module('LOG'):
+					self.server.get_module('LOG').add_default_loggers(drone_id)
 
 
 			def on_connection_failed(uri, message):
@@ -114,9 +111,8 @@ class CrazyflieModule(OscModule):
 
 			def on_disconnection(uri):
 				self._error('Drone', drone_id, 'disconnected')
-				with self.server.drones as drones:
-					if drone_id in drones:
-						drones[drone_id]['connected'] = False
+				if drone_id in self.server.drones:
+					self.server.drones[drone_id]['connected'] = False
 
 			# start the connection
 			cf.connected.add_callback(on_connection)
@@ -168,7 +164,6 @@ class CrazyflieModule(OscModule):
 
 
 	@drone_exists
-	@locks_drones
 	def osc_remove_drone(self, address, *args, **path_args):
 		"""
 		Disconnects and remove the drone with the given ID
