@@ -6,16 +6,20 @@ dispatches requests to correct modules
 """
 import argparse
 
-from server_osc_modules import MetaServerModule
+from server_osc_modules import *
 
 from pythonosc import dispatcher
 from pythonosc import osc_server
+from pythonosc import udp_client
 
 from threading import Thread
 
-class MetaServer(object):
+
+import cflib
+
+class Server(object):
 	"""
-	The meta-server. Calls the inner server and handle its restarting abilities
+	The main server
 	"""
 	def __init__(self):
 		self._osc_server = None
@@ -24,21 +28,41 @@ class MetaServer(object):
 		self.modules = {}
 
 		self.dispatcher = dispatcher.Dispatcher()
+		# DroneModule
+		self.drones = {};
+		# ClientModule
+		self.osc_clients = {}
+		# LpsModule
+		self.lps_node_number = 8
+		self.lps_positions = [None] * self.lps_node_number
 
-		self.inner_server = None
-		self.args = None
+
+	def get_module(self, name):
+		return self.modules[name] if name in self.modules else None
 
 
 	def build_routes(self):
 		"""
-		Build the meta-server routes.
+		Build the server routes.
 		Routes :
-		/server/* -> See MetaServerModule
+		/client/* -> See ClientModule
+		/crazyflie/* -> See CrazyflieModule
+		/lps/* -> See LpsModule
+		/log/* -> See LogModule
+		/param/* -> See ParamModule
 		"""
 
 		self.modules = {
-			MetaServerModule.get_name():
-				MetaServerModule(base_topic='/param', server=self, debug=True),
+			ClientModule.get_name():
+				ClientModule(base_topic='/client', server=self, debug=False),
+			CrazyflieModule.get_name():
+				CrazyflieModule(base_topic='/crazyflie', server=self, debug=True),
+			LpsModule.get_name():
+				LpsModule(base_topic='/lps', server=self, debug=True),
+			LogModule.get_name():
+				LogModule(base_topic='/log', server=self, debug=True),
+			ParamModule.get_name():
+				ParamModule(base_topic='/param', server=self, debug=True),
 
 			#TestModule.get_name():
 			#	TestModule(base_topic='/test', server=self, debug=False),
@@ -49,9 +73,8 @@ class MetaServer(object):
 
 
 	def run(self, args):
-		self.args = args
 		self.ip = args.ip
-		self.port = args.meta_port
+		self.port = args.port
 		self._osc_server = osc_server.ThreadingOSCUDPServer(
 			(self.ip, self.port), self.dispatcher)
 		print("Serving on {}".format(self._osc_server.server_address))
@@ -62,6 +85,9 @@ class MetaServer(object):
 			self.modules[module].start()
 
 		self._osc_server_thread.join()
+		self._osc_server_thread = None
+		self._osc_server = None
+
 
 
 	def stop(self):
@@ -82,13 +108,11 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--ip",
 		default="0.0.0.0", help="The ip to listen on")
-	parser.add_argument("--meta_port",
-		type=int, default=5006, help="The port to listen on for the meta server")
-	parser.add_argument("--inner_port",
-		type=int, default=5005, help="The port to listen on for the inner server")
-
+	parser.add_argument("--port",
+		type=int, default=5005, help="The port to listen on")
 	args = parser.parse_args()
 
+	cflib.crtp.init_drivers(enable_debug_driver=False)
 	server = None
 
 	# ctrl+c killing
@@ -106,6 +130,6 @@ if __name__ == "__main__":
 
 	signal.signal(signal.SIGINT, sigint_handler)
 
-	server = MetaServer()
+	server = Server()
 	server.build_routes()
 	server.run(args)

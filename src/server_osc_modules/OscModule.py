@@ -128,6 +128,12 @@ class OscModule(object):
 		raise NotImplementedError
 
 
+	def start(self):
+		"""
+		Function called on server run
+		"""
+		pass
+
 	def stop(self):
 		"""
 		Function called on server stop

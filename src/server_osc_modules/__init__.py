@@ -4,6 +4,7 @@ from .CrazyflieModule import CrazyflieModule
 from .ClientModule import ClientModule
 from .LogModule import LogModule
 from .ParamModule import ParamModule
-from .ServerModule import ServerModule
 
-from .utils import ThreadSafeDict
+# meta server
+
+from .MetaServerModule import MetaServerModule
