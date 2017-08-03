@@ -222,6 +222,9 @@ class LogModule(OscModule):
 				self._send('/'.join([str(drone_id), log_name, var]),
 					value)
 			# send a json on /{drone_id}/{log_name}
+
+#			self._debug('Log', log_name, 'received :', log_content)
+
 			self._send('/'.join([str(drone_id), log_name]),
 				[log_content[var] for var in logger.variables])
 

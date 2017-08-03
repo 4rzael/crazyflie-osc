@@ -77,9 +77,10 @@ class LpsModule(OscModule):
 		self.server.lps_positions[node_id] = (x, y, z)
 
 		crazyflie_module = self.server.get_module('CRAZYFLIE')
-		crazyflie_module.osc_update_lps_pos('',
-			drones='*',
-			nodes=node_id)
+		for drone_id in range(len(drones)):
+			crazyflie_module.osc_update_lps_pos('',
+				drones=drone_id,
+				nodes=node_id)
 
 
 	@multi_nodes

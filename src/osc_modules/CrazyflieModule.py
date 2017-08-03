@@ -40,7 +40,7 @@ class CrazyflieModule(OscModule):
 						(drone['cf']
 						.commander
 						.send_setpoint(y, x, yaw, int(z*1000)))
-		self.stop_goal_timer = set_interval(send_goal, 10.0/1000.0, self)
+		self.stop_goal_timer = set_interval(send_goal, 25.0/1000.0, self)
 
 
 	def routes(self):
@@ -179,8 +179,7 @@ class CrazyflieModule(OscModule):
 		drone_id = int(path_args['drone_id'])
 		if self.server.drones[drone_id]['connected']:
 			# cut engines
-			self.osc_emergency('', drones=str(drone_id))
-			self.server.drones[drone_id]['cf'].commander.send_setpoint(0,0,0,0)
+			self.server.drones[drone_id]['cf'].commander.send_stop_setpoint()
 			# disconnect
 			self.server.drones[drone_id]['cf'].close_link()
 		# remove
