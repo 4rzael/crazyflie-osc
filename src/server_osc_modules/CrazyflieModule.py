@@ -6,17 +6,24 @@ import cflib
 import threading
 
 def set_interval(func, interval, *args, **kwargs):
-    stopped = threading.Event()
-    def loop():
-        while not stopped.wait(interval): # the first call is in `interval` secs
-            func(*args, **kwargs)
-    threading.Thread(target=loop).start()
-    return stopped.set
+	stopped = threading.Event()
+	def loop():
+		while not stopped.wait(interval): # the first call is in `interval` secs
+			func(*args, **kwargs)
+	threading.Thread(target=loop).start()
+	return stopped.set
 
 class CrazyflieModule(OscModule):
 
 	"""
 	CrazyflieModule class. Implements OSC routes related to the drones
+
+	OSC publish :
+
+	/{drone_id}/connection -> bool (true if success, false otherwise)
+	/{drone_id}/disconnection -> void
+	/{drone_id}/link_quality -> float (0 -> 100)
+	
 	"""
 
 	@staticmethod
@@ -40,7 +47,7 @@ class CrazyflieModule(OscModule):
 						(drone['cf']
 						.commander
 						.send_setpoint(y, x, yaw, int(z*1000)))
-		self.stop_goal_timer = set_interval(send_goal, 0,1, self) # 10Hz
+		self.stop_goal_timer = set_interval(send_goal, 0.1, self) # 10Hz
 
 
 	def routes(self):
@@ -85,6 +92,8 @@ class CrazyflieModule(OscModule):
 			}
 
 
+			send_link_quality_osc_stop = None
+
 			# connection callback
 			def on_connection(uri):
 				self._debug('drone', drone_id, 'connected')
@@ -105,14 +114,37 @@ class CrazyflieModule(OscModule):
 				if self.server.get_module('LOG'):
 					self.server.get_module('LOG').add_default_loggers(drone_id)
 
+				# Start sending link quality at a given rate
+				link_quality = 0
+				def interval_link_quality():
+						nonlocal link_quality
+						self._send('/{}/{}'.format(drone_id, 'link_quality'), link_quality)
+				nonlocal send_link_quality_osc_stop
+				send_link_quality_osc_stop = set_interval(interval_link_quality, 0.1) # 10Hz
+				def on_link_quality(quality):
+						nonlocal link_quality
+						link_quality = quality
+				cf.link_quality_updated.add_callback(on_link_quality)
+
+				self._send('/{}/{}'.format(drone_id, 'connection'), True)
+
 
 			def on_connection_failed(uri, message):
 				self._error('connection to drone', drone_id, 'failed:', message)
+
+				self._send('/{}/{}'.format(drone_id, 'connection'), False)
 
 			def on_disconnection(uri):
 				self._error('Drone', drone_id, 'disconnected')
 				if drone_id in self.server.drones:
 					self.server.drones[drone_id]['connected'] = False
+
+				# stop sending link quality
+				nonlocal send_link_quality_osc_stop
+				if send_link_quality_osc_stop is not None:
+					send_link_quality_osc_stop()
+
+				self._send('/{}/{}'.format(drone_id, 'disconnection'), True)
 
 			# start the connection
 			cf.connected.add_callback(on_connection)
