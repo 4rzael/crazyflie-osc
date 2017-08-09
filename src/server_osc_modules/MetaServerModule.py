@@ -21,6 +21,7 @@ class InnerServer(object):
 	def stop(self):
 		if self.proc is not None:
 			self.proc.send_signal(signal.SIGINT)
+			self.proc.wait()
 			self.proc = None
 
 	def restart(self, arguments):

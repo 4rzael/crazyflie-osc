@@ -38,10 +38,7 @@ class MetaServer(object):
 
 		self.modules = {
 			MetaServerModule.get_name():
-				MetaServerModule(base_topic='/param', server=self, debug=True),
-
-			#TestModule.get_name():
-			#	TestModule(base_topic='/test', server=self, debug=False),
+				MetaServerModule(base_topic='/server', server=self, debug=True),
 		}
 
 		for module in self.modules:

@@ -27,7 +27,7 @@ class CrazyflieModule(OscModule):
 	def __init__(self, server, base_topic, debug=False):
 		super(CrazyflieModule, self).__init__(server=server, base_topic=base_topic, debug=debug)
 
-		# Send goals to drones every 10ms
+		# Send goals to drones
 
 		def send_goal(self):
 			for drone in self.server.drones.values():
@@ -40,7 +40,7 @@ class CrazyflieModule(OscModule):
 						(drone['cf']
 						.commander
 						.send_setpoint(y, x, yaw, int(z*1000)))
-		self.stop_goal_timer = set_interval(send_goal, 25.0/1000.0, self)
+		self.stop_goal_timer = set_interval(send_goal, 0,1, self) # 10Hz
 
 
 	def routes(self):

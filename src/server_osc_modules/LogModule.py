@@ -234,7 +234,7 @@ class LogModule(OscModule):
 		drone_id = int(drone_id)
 
 		# position -> x y z
-		self.osc_add_log('', 'position', 50,
+		self.osc_add_log('', 'position', 200,
 			drones=drone_id)
 		self.osc_log_add_variable('', 'kalman.stateX', 'float',
 			drones=drone_id,
