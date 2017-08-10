@@ -257,4 +257,19 @@ class LogModule(OscModule):
 		self.osc_log_start('',
 			drones=drone_id,
 			log_name='battery')
+		# rotation (roll-pitch-yaw)
+		self.osc_add_log('', 'rpy', 200,
+			drones=drone_id)
+		self.osc_log_add_variable('', 'stabilizer.roll', 'float',
+			drones=drone_id,
+			log_name='rpy')
+		self.osc_log_add_variable('', 'stabilizer.pitch', 'float',
+			drones=drone_id,
+			log_name='rpy')
+		self.osc_log_add_variable('', 'stabilizer.yaw', 'float',
+			drones=drone_id,
+			log_name='rpy')
+		self.osc_log_start('',
+			drones=drone_id,
+			log_name='rpy')
 
