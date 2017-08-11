@@ -69,7 +69,8 @@ class LpsModule(OscModule):
 		node_id = int(path_args['node_id'])
 		self._debug('setting node', node_id, 'position to:', x, y, z)
 
-		drones = self.server.get_module('CRAZYFLIE').get_connected_drones()
+		drones_ids, drones = zip(*self.server.get_module('CRAZYFLIE').get_connected_drones())
+
 
 		anchor = LoPoAnchor(drones[0]['cf'])
 		anchor.set_position(node_id, (x, y, z))
@@ -77,7 +78,7 @@ class LpsModule(OscModule):
 		self.server.lps_positions[node_id] = (x, y, z)
 
 		crazyflie_module = self.server.get_module('CRAZYFLIE')
-		for drone_id in range(len(drones)):
+		for drone_id in drones_ids:
 			crazyflie_module.osc_update_lps_pos('',
 				drones=drone_id,
 				nodes=node_id)
@@ -107,6 +108,6 @@ class LpsModule(OscModule):
 
 		node_id = int(path_args['node_id'])
 		self._debug('rebooting node', node_id)
-		drones = self.server.get_module('CRAZYFLIE').get_connected_drones()
+		_, drones = self.server.get_module('CRAZYFLIE').get_connected_drones()
 		anchor = LoPoAnchor(drones[0]['cf'])
 		anchor.reboot(node_id, LoPoAnchor.REBOOT_TO_BOOTLOADER if reboot_bootloader else LoPoAnchor.REBOOT_TO_FIRMWARE)

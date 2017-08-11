@@ -232,7 +232,10 @@ class CrazyflieModule(OscModule):
 
 
 	def get_connected_drones(self):
-		return [drone for drone in self.server.drones.values() if drone['connected']]
+		"""
+		Returns the list of connected drones as a list of tuples (id, drone)
+		"""
+		return [drone for drone in self.server.drones.items() if drone[1]['connected']]
 
 
 	@osc_requires('LPS')
