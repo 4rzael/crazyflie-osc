@@ -45,7 +45,6 @@ class LpsModule(OscModule):
 		self._debug('New node number :', self.server.lps_node_number)
 
 
-	@one_drone_is_connected
 	@lps_node_exists
 	def osc_set_node_position(self, address, x, y, z, **path_args):
 		"""
@@ -68,20 +67,21 @@ class LpsModule(OscModule):
 
 		node_id = int(path_args['node_id'])
 		self._debug('setting node', node_id, 'position to:', x, y, z)
-
-		drones_ids, drones = zip(*self.server.get_module('CRAZYFLIE').get_connected_drones())
-
-
-		anchor = LoPoAnchor(drones[0]['cf'])
-		anchor.set_position(node_id, (x, y, z))
-
 		self.server.lps_positions[node_id] = (x, y, z)
 
-		crazyflie_module = self.server.get_module('CRAZYFLIE')
-		for drone_id in drones_ids:
-			crazyflie_module.osc_update_lps_pos('',
-				drones=drone_id,
-				nodes=node_id)
+		@one_drone_is_connected
+		def update_in_drone():
+			drones_ids, drones = zip(*self.server.get_module('CRAZYFLIE').get_connected_drones())
+
+			anchor = LoPoAnchor(drones[0]['cf'])
+			anchor.set_position(node_id, (x, y, z))
+
+			crazyflie_module = self.server.get_module('CRAZYFLIE')
+			for drone_id in drones_ids:
+				crazyflie_module.osc_update_lps_pos('',
+					drones=drone_id,
+					nodes=node_id)
+		update_in_drone()
 
 
 	@multi_nodes
