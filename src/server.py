@@ -12,6 +12,7 @@ from pythonosc import dispatcher
 from pythonosc import osc_server
 
 from threading import Thread
+import time
 
 class MetaServer(object):
 	"""
@@ -47,6 +48,7 @@ class MetaServer(object):
 
 	def run(self, args):
 		self.args = args
+		self.running = True
 		self.ip = args.ip
 		self.port = args.meta_port
 		self._osc_server = osc_server.ThreadingOSCUDPServer(
@@ -58,12 +60,14 @@ class MetaServer(object):
 		for module in self.modules:
 			self.modules[module].start()
 
-		self._osc_server_thread.join()
-
+		while self.running:
+			time.sleep(1)
+		# self._osc_server_thread.join()
 
 	def stop(self):
+		self.running = False
 		if self._osc_server:
-			print('stopping server')
+			print('stopping meta server')
 			for module in self.modules.values():
 				module.stop()
 			self._osc_server.shutdown()
@@ -87,14 +91,19 @@ if __name__ == "__main__":
 	args = parser.parse_args()
 
 	server = None
+	abort = False
 
 	# ctrl+c killing
 	import signal
 	import sys
 	import os
-	def sigint_handler(sig, frame):
+
+	def sigint_handler(*args):
 		global server
-		if server is not None:
+		global abort
+
+		if server is not None and not abort:
+			abort = True
 			server.stop()
 			server = None
 		else:

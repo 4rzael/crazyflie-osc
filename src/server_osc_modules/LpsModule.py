@@ -70,7 +70,7 @@ class LpsModule(OscModule):
 		self.server.lps_positions[node_id] = (x, y, z)
 
 		@one_drone_is_connected
-		def update_in_drone():
+		def update_in_drone(self): # The self arg is used because of the decorator only
 			drones_ids, drones = zip(*self.server.get_module('CRAZYFLIE').get_connected_drones())
 
 			anchor = LoPoAnchor(drones[0]['cf'])
@@ -81,7 +81,7 @@ class LpsModule(OscModule):
 				crazyflie_module.osc_update_lps_pos('',
 					drones=drone_id,
 					nodes=node_id)
-		update_in_drone()
+		update_in_drone(self)
 
 
 	@multi_nodes
