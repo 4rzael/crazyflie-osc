@@ -17,17 +17,35 @@ An OSC server to control crazyflies
 
 * [ ] OSC debugging system
 
-* [ ] Unit test
+* [ ] Unit tests
 
 * [x] Sphinx documentation
 
-## How to run :
+## How to install :
 
-* create a new virtualenv
+### LINUX :
 
+* install git, python3, pip3
+* install virtualenv (pip package)
+* clone this repository
+* create a new virtualenv and activate it
 * install python dependencies `pip3 install -r requirements`
 
+### WINDOWS :
+
+#### NOTE : You don't need to clone this repository or anything, the script will take care of this.
+* download [this file](https://gist.github.com/4rzael/b65ba5880ff7d0c1106d8b3dc9d719ca#file-install-crazyflie-osc-bat) as a .bat file
+* run it as admin. (If they ask you things and you don't know what to do, use the defaults)
+
+## How to run :
+
+### LINUX :
+
 * run the server `cd src; ./server.py`
+
+### WINDOWS :
+
+* run the file name `run.bat`
 
 ## How to test :
 
