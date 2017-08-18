@@ -1,7 +1,11 @@
 from .OscModule import OscModule
 
-from subprocess import Popen, CREATE_NEW_PROCESS_GROUP
+from subprocess import Popen
 import sys
+if sys.platform is 'win32':
+	from subprocess import CREATE_NEW_PROCESS_GROUP
+else:
+	CREATE_NEW_PROCESS_GROUP = 0
 import signal
 
 class InnerServer(object):
