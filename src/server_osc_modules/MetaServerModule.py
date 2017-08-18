@@ -1,28 +1,33 @@
 from .OscModule import OscModule
 
-from subprocess import Popen
+from subprocess import Popen, CREATE_NEW_PROCESS_GROUP
 import sys
 import signal
 
 class InnerServer(object):
-	def __init__(self, process_name):
+	def __init__(self, process_name, *args):
 		self.proc = None
 		self.process_name = process_name
+		self.args = list(args)
 
 	def start(self, arguments):
 		if self.proc is None:
-			command = [self.process_name]
+			command = [self.process_name] + self.args
 			for k in arguments.keys():
 				command.append('--'+k)
 				command.append(str(arguments[k]))
 
-			self.proc = Popen(command, stdout=sys.stdout, stderr=sys.stderr)
+			self.proc = Popen(command, stdout=sys.stdout, stderr=sys.stderr, creationflags=CREATE_NEW_PROCESS_GROUP)
 
 	def stop(self):
 		if self.proc is not None:
-			self.proc.send_signal(signal.SIGINT)
-			self.proc.wait()
-			self.proc = None
+			try:
+				self.proc.send_signal(signal.SIGINT)
+			except:
+				self.proc.kill()
+			finally:
+				self.proc.wait()
+				self.proc = None
 
 	def restart(self, arguments):
 		self.stop()
@@ -60,10 +65,12 @@ class MetaServerModule(OscModule):
 			})
 
 	def start(self):
-		self.server.inner_server = InnerServer('./inner_server.py')
+		self.server.inner_server = InnerServer('python', './inner_server.py')
 		self._debug('starting server')
 		self.server.inner_server.start({
 			'ip': self.server.args.ip,
 			'port': self.server.args.inner_port
 			})
 
+	def stop(self):
+		self.server.inner_server.stop()

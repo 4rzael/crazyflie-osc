@@ -13,6 +13,7 @@ from pythonosc import osc_server
 from pythonosc import udp_client
 
 from threading import Thread
+import time
 
 
 import cflib
@@ -73,6 +74,7 @@ class Server(object):
 
 
 	def run(self, args):
+		self.running = True
 		self.ip = args.ip
 		self.port = args.port
 		self._osc_server = osc_server.ThreadingOSCUDPServer(
@@ -84,15 +86,17 @@ class Server(object):
 		for module in self.modules:
 			self.modules[module].start()
 
-		self._osc_server_thread.join()
+		while self.running: # windows is trash
+			time.sleep(1)
+		# self._osc_server_thread.join()
 		self._osc_server_thread = None
 		self._osc_server = None
 
 
-
 	def stop(self):
+		self.running = False
 		if self._osc_server:
-			print('stopping server')
+			print('stopping inner server')
 			for module in self.modules.values():
 				module.stop()
 			self._osc_server.shutdown()
@@ -114,14 +118,18 @@ if __name__ == "__main__":
 
 	cflib.crtp.init_drivers(enable_debug_driver=False)
 	server = None
+	abort = False
 
 	# ctrl+c killing
 	import signal
 	import sys
 	import os
-	def sigint_handler(sig, frame):
+	def sigint_handler(*args):
 		global server
-		if server is not None:
+		global abort
+
+		if server is not None and not abort:
+			abort = True
 			server.stop()
 			server = None
 		else:
