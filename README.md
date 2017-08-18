@@ -53,6 +53,12 @@ An OSC server to control crazyflies
 
 ## How to test :
 
+### NEW WAY :
+
+In order to use (or manually test) this project, you should use [my Unity3D client](https://github.com/4rzael/crazyflie-osc-unity).
+
+### OLD WAY :
+
 No unit tests are currently present, but manual test client and server are present.
 
 * run both of them : `cd manual_tests; ./test_client.py` and `cd manual_tests; ./test_server.py`
