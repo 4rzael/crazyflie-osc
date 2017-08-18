@@ -39,7 +39,10 @@ An OSC server to control crazyflies
 * install the crazyradio drivers :
   * plug in the radio
   * run zadig (win+r, then type zadig, then enter)
-  * select the crazyradio and click on "install driver"
+  * select the crazyradio
+  * select the libusb-win32 driver
+  * click on "install driver"
+  * repeat for each radio
 
 ## How to run :
 
