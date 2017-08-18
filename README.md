@@ -36,6 +36,10 @@ An OSC server to control crazyflies
 #### NOTE : You don't need to clone this repository or anything, the script will take care of this.
 * download [this file](https://gist.github.com/4rzael/b65ba5880ff7d0c1106d8b3dc9d719ca#file-install-crazyflie-osc-bat) as a .bat file
 * run it as admin. (If they ask you things and you don't know what to do, use the defaults)
+* install the crazyradio drivers :
+  * plug in the radio
+  * run zadig (win+r, then type zadig, then enter)
+  * select the crazyradio and click on "install driver"
 
 ## How to run :
 
